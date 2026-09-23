@@ -3,28 +3,75 @@ const cors = require("cors");
 
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
-const taskRoutes = require("./routes/taskRoutes");
-const dashboardRoutes = require("./routes/dashboardRoutes");
-const scheduleRoutes = require("./routes/scheduleRoutes");
+const subjectRoutes = require("./routes/subjectRoutes");
+const plannerRoutes = require("./routes/plannerRoutes");
+const aiRoutes=require("./routes/aiRoutes");
+const calendarRoutes = require("./routes/calendarRoutes");
+const noteRoutes=require("./routes/noteRoutes");
+const attendanceRoutes=require("./routes/attendanceRoutes");
+const analyticsRoutes = require("./routes/analyticsRoutes");
+const quizRoutes = require("./routes/quizRoutes");
 
 const app = express();
 
-// Middleware
+
+// Middlewares
+
 app.use(cors());
+
 app.use(express.json());
 
-// Default Route
+app.use(express.urlencoded({
+    extended:true
+}));
+
+// Routes
+
+app.use(
+    "/api/auth",
+    authRoutes
+);
+
+app.use(
+"/api/ai",
+aiRoutes
+);
+
+app.use(
+    "/api/planner",
+    plannerRoutes
+);
+
+app.use(
+    "/api/user",
+    userRoutes
+);
+
+app.use(
+    "/api/subjects",
+    subjectRoutes
+);
+
+app.use("/api/notes",noteRoutes);
+
+app.use("/api/calendar", calendarRoutes);
+// Default route
+
+app.use(
+"/api/attendance",
+attendanceRoutes
+);
+
+app.use("/api/analytics", analyticsRoutes);
+app.use("/api/quiz", quizRoutes);
+
 app.get("/", (req, res) => {
-  res.json({
-    message: "Welcome to StudySync AI API 🚀",
-  });
+
+    res.send(
+        "Kortex AI Backend Running 🚀"
+    );
+
 });
 
-// Authentication Routes
-app.use("/api/auth", authRoutes);
-app.use("/api/user", userRoutes);
-app.use("/api/tasks", taskRoutes);
-app.use("/api/dashboard", dashboardRoutes);
-app.use("/api/schedule", scheduleRoutes);
 
 module.exports = app;

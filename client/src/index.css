@@ -1,1 +1,26 @@
 @import "tailwindcss";
+.ai-markdown h1,
+.ai-markdown h2,
+.ai-markdown h3 {
+  font-weight: 700;
+  margin-top: 16px;
+  margin-bottom: 8px;
+}
+
+.ai-markdown ul {
+  list-style-type: disc;
+  padding-left: 20px;
+}
+
+.ai-markdown ol {
+  list-style-type: decimal;
+  padding-left: 20px;
+}
+
+.ai-markdown li {
+  margin-bottom: 6px;
+}
+
+.ai-markdown strong {
+  font-weight: 700;
+}

@@ -9,19 +9,22 @@ import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
 
 function Login() {
-   const [formData, setFormData] = useState({
-   email: "",
-   password: "",
- });
+const [formData, setFormData] = useState({
+  email: "",
+  password: "",
+  rememberMe: false,
+});
    const [loading, setLoading] = useState(false);
    const navigate = useNavigate();
    const { login } = useAuth();
 
-    const handleChange = (e) => {
-  setFormData({
-    ...formData,
-    [e.target.name]: e.target.value,
-  });
+const handleChange = (e) => {
+  const { name, value, type, checked } = e.target;
+
+  setFormData((previousData) => ({
+    ...previousData,
+    [name]: type === "checkbox" ? checked : value,
+  }));
 };
 const handleSubmit = async (e) => {
   e.preventDefault();
@@ -29,15 +32,19 @@ const handleSubmit = async (e) => {
   try {
     setLoading(true);
 
-    const data = await loginUser(formData);
+   const data = await loginUser(formData);
 
-    localStorage.setItem("token", data.token);
+console.log("SUCCESS DATA:", data);
 
-    login(data.user);
+login(
+  data.user,
+  data.token,
+  formData.rememberMe
+);
 
-    alert(data.message);
+console.log("Navigating dashboard");
 
-    navigate("/dashboard");
+navigate("/dashboard");
   } catch (error) {
     alert(
       error.response?.data?.message || "Login failed"
@@ -122,17 +129,21 @@ const handleSubmit = async (e) => {
 
             <div className="flex justify-between text-sm">
 
-              <label className="flex items-center gap-2">
-                <input type="checkbox" />
-                Remember me
-              </label>
+<label className="flex items-center gap-2 cursor-pointer">
 
-              <button
-                type="button"
-                className="text-indigo-600 hover:underline"
-              >
-                Forgot Password?
-              </button>
+  <input
+    type="checkbox"
+    name="rememberMe"
+    checked={formData.rememberMe}
+    onChange={handleChange}
+    className="w-4 h-4 accent-indigo-600"
+  />
+
+  <span>
+    Remember me
+  </span>
+
+</label>
 
             </div>
 
