@@ -18,6 +18,7 @@ import { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../services/api";
+import { getAIPlans } from "../../services/aiService";
 import Logo from "../ui/Logo";
 
 const mainMenu = [
@@ -76,15 +77,6 @@ const aiMenu = [
   },
 ];
 
-const getLocalDate = () => {
-  const today = new Date();
-
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const day = String(today.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-};
 
 function Sidebar() {
   const { logout } = useAuth();
@@ -97,15 +89,21 @@ function Sidebar() {
 
     const loadStreak = async () => {
       try {
-        const response = await api.get(
-          `/planner/streak?localDate=${getLocalDate()}`
-        );
+       const response = await getAIPlans();
 
-        if (mounted) {
-          setCurrentStreak(
-            Number(response.data?.currentStreak ?? 0)
-          );
-        }
+const plans = Array.isArray(response)
+  ? response
+  : Array.isArray(response?.plans)
+  ? response.plans
+  : [];
+
+const latestPlan = plans[0];
+
+if (mounted) {
+  setCurrentStreak(
+    Number(latestPlan?.currentStreak ?? 0)
+  );
+}
       } catch (error) {
         console.error(
           "SIDEBAR STREAK LOAD ERROR:",
