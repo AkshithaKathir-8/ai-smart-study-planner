@@ -1,324 +1,367 @@
 import { useState } from "react";
-import { generateQuiz as generateQuizAPI } from "../../services/aiService";
+import {
+  generateQuiz as generateQuizAPI,
+  saveQuiz,
+} from "../../services/aiService";
+import { useSubjects } from "../../context/SubjectContext";
 
 function AIQuiz() {
+  const { subjects, loading: subjectsLoading } = useSubjects();
 
-  const [subject, setSubject] = useState("");
+  const [subjectId, setSubjectId] = useState("");
   const [topic, setTopic] = useState("");
 
   const [quiz, setQuiz] = useState([]);
-
-  const [score, setScore] = useState(null);
-
-  const [submitted, setSubmitted] = useState(false);
   const [answers, setAnswers] = useState({});
 
+  const [score, setScore] = useState(null);
+  const [submitted, setSubmitted] = useState(false);
+
+  const [generating, setGenerating] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const [error, setError] = useState("");
+
+  const selectedSubject = subjects.find(
+    (subject) => subject._id === subjectId
+  );
+
   const generateQuiz = async () => {
+    if (!subjectId) {
+      setError("Please select a subject.");
+      return;
+    }
 
-  if (!subject.trim()) {
-    alert("Please enter a subject");
-    return;
-  }
-  
-setAnswers({});
-  try {
-
+    setGenerating(true);
+    setError("");
     setQuiz([]);
-    setSubmitted(false);
+    setAnswers({});
     setScore(null);
+    setSubmitted(false);
+    setSaved(false);
 
-    const response = await generateQuizAPI({
+    try {
+      const response = await generateQuizAPI({
+        subject: selectedSubject.name,
+        topic: topic.trim(),
+        difficulty: "Medium",
+        count: 5,
+      });
 
-      subject,
-      topic,
-      difficulty: "Medium",
-      count: 5,
+      if (
+        !response ||
+        !Array.isArray(response.quiz) ||
+        response.quiz.length === 0
+      ) {
+        throw new Error("The AI did not return any questions.");
+      }
 
-    });
+      const formattedQuiz = response.quiz.map((question) => ({
+        question: question.question,
+        options: question.options,
+        correctAnswer: question.answer,
+        explanation: question.explanation || "",
+      }));
 
-    const formattedQuiz = response.quiz.map((q) => ({
+      setQuiz(formattedQuiz);
+    } catch (err) {
+      console.error("Quiz generation failed:", err);
 
-      question: q.question,
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Failed to generate quiz."
+      );
+    } finally {
+      setGenerating(false);
+    }
+  };
 
-      options: q.options,
-
-      correctAnswer: q.answer,
-
-      explanation: q.explanation,
-
+  const selectAnswer = (questionIndex, option) => {
+    setAnswers((previous) => ({
+      ...previous,
+      [questionIndex]: option,
     }));
+  };
 
-    setQuiz(formattedQuiz);
-
-  }
-
-  catch (err) {
-
-    console.log(err);
-
-    alert("Failed to generate quiz");
-
-  }
-
-};
-
-  const checkAnswers = () => {
+  const checkAnswers = async () => {
+    if (Object.keys(answers).length !== quiz.length) {
+      setError("Please answer every question before submitting.");
+      return;
+    }
 
     let marks = 0;
 
-    quiz.forEach((q, index) => {
-
-      const selected = answers[index];
-
-if (selected === q.correctAnswer) {
-    marks++;
-}
-
+    quiz.forEach((question, index) => {
+      if (answers[index] === question.correctAnswer) {
+        marks++;
+      }
     });
 
     setScore(marks);
-
     setSubmitted(true);
+    setError("");
+    setSaving(true);
 
+    try {
+      await saveQuiz({
+        subjectId,
+        score: marks,
+        totalQuestions: quiz.length,
+        questions: quiz.map((question, index) => ({
+          question: question.question,
+          options: question.options,
+          correctAnswer: question.correctAnswer,
+          selectedAnswer: answers[index],
+        })),
+      });
+
+      setSaved(true);
+    } catch (err) {
+      console.error("Saving quiz failed:", err);
+
+      setError(
+        "Your score was calculated, but the quiz could not be saved. Please try again."
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   const tryAgain = () => {
-
+    setAnswers({});
     setScore(null);
-
     setSubmitted(false);
-
-setAnswers({});
+    setSaved(false);
+    setError("");
   };
 
   return (
+    <div className="p-6 md:p-8">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-indigo-600">
+          🧠 AI Quiz Generator
+        </h1>
 
-    <div className="p-8">
+        <p className="mt-2 text-slate-500">
+          Generate a quiz, test your knowledge, and save your results.
+        </p>
+      </div>
 
-      <h1 className="text-3xl font-bold text-indigo-600 mb-6">
-        🧠 AI Quiz Generator
-      </h1>
+      <div className="mb-6 rounded-3xl bg-white p-6 shadow">
+        <label className="mb-2 block font-medium text-slate-700">
+          Subject
+        </label>
 
-      <div className="bg-white rounded-3xl shadow p-6 mb-6">
+        <select
+          className="mb-4 w-full rounded-xl border border-slate-300 p-3"
+          value={subjectId}
+          onChange={(event) => setSubjectId(event.target.value)}
+          disabled={subjectsLoading || generating}
+        >
+          <option value="">
+            {subjectsLoading
+              ? "Loading subjects..."
+              : "Select a subject"}
+          </option>
+
+          {subjects.map((subject) => (
+            <option key={subject._id} value={subject._id}>
+              {subject.name}
+            </option>
+          ))}
+        </select>
+
+        <label className="mb-2 block font-medium text-slate-700">
+          Topic (optional)
+        </label>
 
         <input
-          className="border p-3 rounded-xl w-full mb-4"
-          placeholder="Enter Subject"
-          value={subject}
-          onChange={(e) => setSubject(e.target.value)}
-        />
-
-        <input
-          className="border p-3 rounded-xl w-full mb-4"
-          placeholder="Enter Topic"
+          className="mb-4 w-full rounded-xl border border-slate-300 p-3"
+          placeholder="Enter a topic, for example: DBMS Normalization"
           value={topic}
-          onChange={(e) => setTopic(e.target.value)}
+          onChange={(event) => setTopic(event.target.value)}
+          disabled={generating}
         />
 
         <button
           onClick={generateQuiz}
-          className="bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-6 py-3 rounded-xl"
+          disabled={generating || subjectsLoading || subjects.length === 0}
+          className="rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-3 font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Generate Quiz
+          {generating ? "Generating..." : "Generate Quiz"}
         </button>
 
+        {!subjectsLoading && subjects.length === 0 && (
+          <p className="mt-3 text-sm text-amber-700">
+            Add a subject in Kortex before generating a quiz.
+          </p>
+        )}
       </div>
 
+      {error && (
+        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
+          {error}
+        </div>
+      )}
+
       {quiz.length > 0 && (
+        <div className="rounded-3xl bg-white p-6 shadow">
+          <div className="mb-6">
+            <h2 className="text-xl font-bold text-slate-800">
+              {selectedSubject?.name}
+              {topic.trim() ? ` — ${topic}` : ""}
+            </h2>
 
-        <div className="bg-white rounded-3xl shadow p-6">
+            <p className="mt-1 text-sm text-slate-500">
+              {quiz.length} questions · Medium difficulty
+            </p>
+          </div>
 
-          {quiz.map((q, index) => {
-
+          {quiz.map((question, index) => {
             const selected = answers[index];
 
-            return (
+            const correct = selected === question.correctAnswer;
 
+            return (
               <div
                 key={index}
-                className="mb-8"
+                className="mb-8 border-b border-slate-100 pb-6 last:border-b-0"
               >
-
-                <h3 className="font-semibold text-lg mb-3">
-
-                  {index + 1}. {q.question}
-
+                <h3 className="mb-4 text-lg font-semibold text-slate-800">
+                  {index + 1}. {question.question}
                 </h3>
 
-                {q.options.map((option, optionIndex) => {
-                 const optionLetter = String.fromCharCode(65 + optionIndex);
-                  let bg = "";
+                <div className="space-y-3">
+                  {question.options.map((option, optionIndex) => {
+                    const letter = String.fromCharCode(65 + optionIndex);
 
-                  if (submitted) {
+                    let optionStyle =
+                      "border-slate-200 hover:border-indigo-300";
 
-                    if (option === q.correctAnswer){
-
-                      bg = "bg-green-100 border-green-500";
-
+                    if (submitted && option === question.correctAnswer) {
+                      optionStyle =
+                        "border-green-500 bg-green-50 text-green-800";
+                    } else if (submitted && option === selected) {
+                      optionStyle =
+                        "border-red-500 bg-red-50 text-red-800";
+                    } else if (selected === option) {
+                      optionStyle =
+                        "border-indigo-500 bg-indigo-50";
                     }
 
-                    else if (option === selected) {
+                    return (
+                      <label
+                        key={`${index}-${optionIndex}`}
+                        className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 ${optionStyle}`}
+                      >
+                        <input
+                          type="radio"
+                          name={`question-${index}`}
+                          value={option}
+                          checked={selected === option}
+                          disabled={submitted}
+                          onChange={() =>
+                            selectAnswer(index, option)
+                          }
+                          className="mt-1"
+                        />
 
-                      bg = "bg-red-100 border-red-500";
+                        <span className="font-semibold">
+                          {letter}.
+                        </span>
 
-                    }
+                        <span>{option}</span>
+                      </label>
+                    );
+                  })}
+                </div>
 
-                  }
+                {submitted && (
+                  <div className="mt-4 rounded-xl bg-slate-50 p-4">
+                    <p
+                      className={`font-semibold ${
+                        correct ? "text-green-700" : "text-red-700"
+                      }`}
+                    >
+                      {correct ? "✓ Correct" : "✕ Incorrect"}
+                    </p>
 
-                  return (
+                    {!correct && (
+                      <p className="mt-2 text-sm text-slate-700">
+                        Correct answer: {question.correctAnswer}
+                      </p>
+                    )}
 
-                    <label
-  key={option}
-  className={`block mb-2 border rounded-xl p-3 ${bg}`}
->
-
-  <input
-type="radio"
-name={`q${index}`}
-value={option}
-checked={answers[index] === option}
-disabled={submitted}
-onChange={() =>
-setAnswers({
-...answers,
-[index]: option
-})
-}
-/>
-
-  <span className="ml-2 font-medium">
-    Option {optionLetter}
-  </span>
-
-  <span className="ml-2">
-    {option}
-  </span>
-
-</label>
-
-                  );
-
-                })}
-
-                {submitted && (() => {
-
-  const correctIndex = q.options.findIndex(
-    opt => opt === q.correctAnswer
-  );
-
-  const correctLetter =
-    String.fromCharCode(65 + correctIndex);
-
-  const isCorrect =
-    selected === q.correctAnswer;
-
-  return (
-
-    <div className="mt-4 p-4 rounded-xl bg-slate-100">
-
-      <p
-        className={`font-bold text-lg ${
-          isCorrect
-            ? "text-green-600"
-            : "text-red-600"
-        }`}
-      >
-        {isCorrect
-          ? "✅ Correct"
-          : "❌ Incorrect"}
-      </p>
-
-      {!isCorrect && (
-
-<p className="mt-3 font-semibold">
-
-  ✅ Correct Answer:
-
-  <span className="text-green-700 ml-2">
-
-    Option {correctLetter} — {q.correctAnswer}
-
-  </span>
-
-</p>
-
-)}
-
-      <p className="mt-3 text-sm text-slate-600">
-
-        💡 Explanation:
-
-        <br />
-
-        {q.explanation}
-
-      </p>
-
-    </div>
-
-  );
-
-})()}
-</div>
+                    {question.explanation && (
+                      <p className="mt-3 text-sm text-slate-600">
+                        <strong>Explanation:</strong>{" "}
+                        {question.explanation}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
             );
-
           })}
 
           {!submitted && (
-
             <button
               onClick={checkAnswers}
-              className="bg-green-600 text-white px-6 py-3 rounded-xl"
+              disabled={saving}
+              className="rounded-xl bg-green-600 px-6 py-3 font-medium text-white disabled:opacity-60"
             >
               Submit Quiz
             </button>
-
           )}
 
           {submitted && (
-
             <div className="mt-6">
-
-              <div className="p-5 rounded-2xl bg-green-50 mb-5">
-
-                <h2 className="text-2xl font-bold text-green-700">
-
-                  🎯 Score : {score}/{quiz.length}
-
+              <div className="mb-4 rounded-2xl bg-indigo-50 p-5">
+                <h2 className="text-2xl font-bold text-indigo-700">
+                  Score: {score}/{quiz.length}
                 </h2>
 
+                <p className="mt-1 text-slate-600">
+                  {Math.round((score / quiz.length) * 100)}% correct
+                </p>
               </div>
 
-              <div className="flex gap-4">
+              {saving && (
+                <p className="mb-4 text-sm text-indigo-600">
+                  Saving your quiz result...
+                </p>
+              )}
 
+              {saved && (
+                <p className="mb-4 text-sm font-medium text-green-700">
+                  ✓ Quiz result saved successfully.
+                </p>
+              )}
+
+              <div className="flex flex-wrap gap-3">
                 <button
                   onClick={tryAgain}
-                  className="px-6 py-3 rounded-xl bg-indigo-600 text-white"
+                  className="rounded-xl bg-indigo-600 px-6 py-3 font-medium text-white"
                 >
-                  🔄 Try Again
+                  Try Again
                 </button>
 
                 <button
                   onClick={generateQuiz}
-                  className="px-6 py-3 rounded-xl bg-purple-600 text-white"
+                  disabled={generating}
+                  className="rounded-xl bg-violet-600 px-6 py-3 font-medium text-white disabled:opacity-60"
                 >
-                  ✨ Generate New Quiz
+                  {generating ? "Generating..." : "Generate New Quiz"}
                 </button>
-
               </div>
-
             </div>
-
           )}
-
         </div>
-
       )}
-
     </div>
-
   );
-
 }
 
 export default AIQuiz;

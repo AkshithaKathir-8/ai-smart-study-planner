@@ -139,3 +139,17 @@ export const markPlanSessionCompleted = async (planId, sessionId) => {
 
   return response.data;
 };
+
+// =====================================================
+// SAVE AND FETCH COMPLETED QUIZZES
+// =====================================================
+
+export const saveQuiz = async (data) => {
+  const response = await api.post("/quiz", data);
+  return response.data;
+};
+
+export const getQuizzes = async () => {
+  const response = await api.get("/quiz");
+  return response.data;
+};
