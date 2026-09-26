@@ -16,6 +16,7 @@ import AIQuiz from "../pages/ai/AIQuiz";
 import MainLayout from "../components/layout/MainLayout";
 import Register from "../pages/auth/Register";
 import Settings from "../pages/settings/Settings";
+import QuizHistory from "../pages/ai/QuizHistory";
 import { useAuth } from "../context/AuthContext";
 
 function AppRoutes() {
@@ -136,6 +137,14 @@ element={
       <MainLayout>
         <AIQuiz />
       </MainLayout>
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/quiz-history"
+  element={
+    <ProtectedRoute>
+      <QuizHistory />
     </ProtectedRoute>
   }
 />

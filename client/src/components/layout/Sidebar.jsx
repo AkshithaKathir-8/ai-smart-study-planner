@@ -11,6 +11,7 @@ import {
   Sparkles,
   FileQuestion,
   Library,
+  History,
 } from "lucide-react";
 
 import { useEffect, useState } from "react";
@@ -19,17 +20,60 @@ import { useAuth } from "../../context/AuthContext";
 import api from "../../services/api";
 import Logo from "../ui/Logo";
 
-const menu = [
-  { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
-  { name: "Subjects", icon: Library, path: "/subjects" },
-  { name: "Planner", icon: BookOpen, path: "/planner" },
-  { name: "Calendar", icon: CalendarDays, path: "/calendar" },
-  { name: "Notes", icon: NotebookPen, path: "/notes" },
-  { name: "Attendance", icon: ClipboardCheck, path: "/attendance" },
-  { name: "Analytics", icon: BarChart3, path: "/analytics" },
-  { name: "AI Coach", icon: Sparkles, path: "/ai" },
-  { name: "AI Quiz", icon: FileQuestion, path: "/ai-quiz" },
-  { name: "Settings", icon: Settings, path: "/settings" },
+const mainMenu = [
+  {
+    name: "Dashboard",
+    icon: LayoutDashboard,
+    path: "/dashboard",
+  },
+  {
+    name: "Subjects",
+    icon: Library,
+    path: "/subjects",
+  },
+  {
+    name: "Planner",
+    icon: BookOpen,
+    path: "/planner",
+  },
+  {
+    name: "Calendar",
+    icon: CalendarDays,
+    path: "/calendar",
+  },
+  {
+    name: "Notes",
+    icon: NotebookPen,
+    path: "/notes",
+  },
+  {
+    name: "Attendance",
+    icon: ClipboardCheck,
+    path: "/attendance",
+  },
+  {
+    name: "Analytics",
+    icon: BarChart3,
+    path: "/analytics",
+  },
+];
+
+const aiMenu = [
+  {
+    name: "AI Chat",
+    icon: Sparkles,
+    path: "/ai",
+  },
+  {
+    name: "AI Quiz",
+    icon: FileQuestion,
+    path: "/ai-quiz",
+  },
+  {
+    name: "Quiz History",
+    icon: History,
+    path: "/quiz-history",
+  },
 ];
 
 const getLocalDate = () => {
@@ -58,7 +102,9 @@ function Sidebar() {
         );
 
         if (mounted) {
-          setCurrentStreak(Number(response.data?.currentStreak ?? 0));
+          setCurrentStreak(
+            Number(response.data?.currentStreak ?? 0)
+          );
         }
       } catch (error) {
         console.error(
@@ -75,14 +121,41 @@ function Sidebar() {
 
     return () => {
       mounted = false;
-      window.removeEventListener("study-streak-updated", loadStreak);
-      window.removeEventListener("ai-study-plan-updated", loadStreak);
+      window.removeEventListener(
+        "study-streak-updated",
+        loadStreak
+      );
+      window.removeEventListener(
+        "ai-study-plan-updated",
+        loadStreak
+      );
     };
   }, []);
 
   const handleLogout = () => {
     logout();
     navigate("/login");
+  };
+
+  const renderMenuItem = (item) => {
+    const Icon = item.icon;
+
+    return (
+      <NavLink
+        key={item.name}
+        to={item.path}
+        className={({ isActive }) =>
+          `flex items-center gap-4 px-4 py-3 rounded-2xl mb-3 transition-all duration-300 ${
+            isActive
+              ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg"
+              : "text-slate-600 hover:bg-slate-100 hover:translate-x-1"
+          }`
+        }
+      >
+        <Icon size={21} />
+        <span className="font-medium">{item.name}</span>
+      </NavLink>
+    );
   };
 
   return (
@@ -94,26 +167,26 @@ function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 px-5 py-6 overflow-y-auto">
-        {menu.map((item) => {
-          const Icon = item.icon;
+        {/* Main Navigation */}
+        {mainMenu.map(renderMenuItem)}
 
-          return (
-            <NavLink
-              key={item.name}
-              to={item.path}
-              className={({ isActive }) =>
-                `flex items-center gap-4 px-4 py-3 rounded-2xl mb-3 transition-all duration-300 ${
-                  isActive
-                    ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg"
-                    : "text-slate-600 hover:bg-slate-100 hover:translate-x-1"
-                }`
-              }
-            >
-              <Icon size={21} />
-              <span className="font-medium">{item.name}</span>
-            </NavLink>
-          );
-        })}
+        {/* AI & Learning */}
+        <div className="mt-6 mb-3 px-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+            AI & Learning
+          </p>
+        </div>
+
+        {aiMenu.map(renderMenuItem)}
+
+        {/* Settings */}
+        <div className="mt-6">
+          {renderMenuItem({
+            name: "Settings",
+            icon: Settings,
+            path: "/settings",
+          })}
+        </div>
       </nav>
 
       {/* Dynamic Study Streak */}
@@ -125,7 +198,8 @@ function Sidebar() {
             <p className="text-sm opacity-90">Study Streak</p>
 
             <h2 className="text-2xl font-bold">
-              {currentStreak} {currentStreak === 1 ? "Day" : "Days"}
+              {currentStreak}{" "}
+              {currentStreak === 1 ? "Day" : "Days"}
             </h2>
           </div>
         </div>
