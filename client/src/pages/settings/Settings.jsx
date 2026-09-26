@@ -7,8 +7,9 @@ import { User, Bell, Shield, Save } from "lucide-react";
 function Settings() {
   const { user, login } = useAuth();
 
-  const [notifications, setNotifications] = useState(true);
-
+const [notifications, setNotifications] = useState(
+  user?.notificationsEnabled ?? true
+);
   const [profile, setProfile] = useState({
     name: user?.name || "",
     email: user?.email || "",
@@ -195,10 +196,36 @@ const handleSave = async () => {
 
 
             <button
-              onClick={() =>
-                setNotifications(!notifications)
-              }
-              className={`
+onClick={async () => {
+  const newValue = !notifications;
+
+  try {
+    setNotifications(newValue);
+
+    const response = await api.put("/user/profile", {
+      name: profile.name,
+      email: profile.email,
+      notificationsEnabled: newValue,
+    });
+
+    const updatedUser = response.data.user;
+
+    const token =
+      localStorage.getItem("token") ||
+      sessionStorage.getItem("token");
+
+    const rememberMe = !!localStorage.getItem("token");
+
+    login(updatedUser, token, rememberMe);
+  } catch (error) {
+    setNotifications(notifications);
+
+    alert(
+      error.response?.data?.message ||
+        "Failed to update notification settings."
+    );
+  }
+}}              className={`
                 relative
                 w-14
                 h-8

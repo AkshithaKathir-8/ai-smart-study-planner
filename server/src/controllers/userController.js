@@ -23,7 +23,7 @@ exports.getProfile = async (req, res) => {
 // UPDATE USER PROFILE
 exports.updateProfile = async (req, res) => {
   try {
-    const { name, email } = req.body;
+    const { name, email, notificationsEnabled } = req.body;
 
     const user = await User.findById(req.user.id);
 
@@ -54,16 +54,21 @@ exports.updateProfile = async (req, res) => {
     if (email) {
       user.email = email.toLowerCase().trim();
     }
+     
+    if (typeof notificationsEnabled === "boolean") {
+  user.notificationsEnabled = notificationsEnabled;
+}
 
     await user.save();
 
     res.json({
       message: "Profile updated successfully",
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-      },
+     user: {
+  id: user._id,
+  name: user.name,
+  email: user.email,
+  notificationsEnabled: user.notificationsEnabled,
+},
     });
   } catch (error) {
     res.status(500).json({

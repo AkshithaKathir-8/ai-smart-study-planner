@@ -21,6 +21,11 @@ const userSchema = new mongoose.Schema(
         required:true,
     },
 
+    notificationsEnabled:{
+    type:Boolean,
+    default:true,
+},
+
 },
 {
     timestamps:true
