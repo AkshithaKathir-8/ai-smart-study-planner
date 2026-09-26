@@ -7,8 +7,8 @@ const protect = require("../middleware/authMiddleware");
 const {
   getProfile,
   updateProfile,
+  changePassword,
 } = require("../controllers/userController");
-
 
 // Get logged-in user's profile
 router.get(
@@ -17,7 +17,6 @@ router.get(
   getProfile
 );
 
-
 // Update logged-in user's profile
 router.put(
   "/profile",
@@ -25,5 +24,11 @@ router.put(
   updateProfile
 );
 
+// Change logged-in user's password
+router.put(
+  "/change-password",
+  protect,
+  changePassword
+);
 
 module.exports = router;
