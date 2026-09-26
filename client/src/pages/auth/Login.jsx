@@ -1,58 +1,71 @@
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { GraduationCap, Mail, Lock } from "lucide-react";
+
 import { loginUser } from "../../services/authService";
 import { useAuth } from "../../context/AuthContext";
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { GraduationCap, Mail, Lock } from "lucide-react";
+
 import Logo from "../../components/ui/Logo";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
 
 function Login() {
-const [formData, setFormData] = useState({
-  email: "",
-  password: "",
-  rememberMe: false,
-});
-   const [loading, setLoading] = useState(false);
-   const navigate = useNavigate();
-   const { login } = useAuth();
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    rememberMe: false,
+  });
 
-const handleChange = (e) => {
-  const { name, value, type, checked } = e.target;
+  const [loading, setLoading] = useState(false);
 
-  setFormData((previousData) => ({
-    ...previousData,
-    [name]: type === "checkbox" ? checked : value,
-  }));
-};
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  const navigate = useNavigate();
+  const { login, user } = useAuth();
 
-  try {
-    setLoading(true);
+  // If the user is already logged in,
+  // don't allow them to stay on the login page.
+  useEffect(() => {
+    if (user) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [user, navigate]);
 
-   const data = await loginUser(formData);
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
 
-console.log("SUCCESS DATA:", data);
+    setFormData((previousData) => ({
+      ...previousData,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
 
-login(
-  data.user,
-  data.token,
-  formData.rememberMe
-);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-console.log("Navigating dashboard");
+    try {
+      setLoading(true);
 
-navigate("/dashboard");
-  } catch (error) {
-    alert(
-      error.response?.data?.message || "Login failed"
-    );
-  } finally {
-    setLoading(false);
-  }
-};
+      const data = await loginUser(formData);
+
+      console.log("SUCCESS DATA:", data);
+
+      login(
+        data.user,
+        data.token,
+        formData.rememberMe
+      );
+
+      console.log("Navigating dashboard");
+
+      navigate("/dashboard");
+    } catch (error) {
+      alert(
+        error.response?.data?.message || "Login failed"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen grid lg:grid-cols-2 bg-slate-50">
 
@@ -110,46 +123,46 @@ navigate("/dashboard");
           <form onSubmit={handleSubmit} className="mt-8 space-y-6">
 
             <Input
-  label="Email"
-  type="email"
-  name="email"
-  value={formData.email}
-  onChange={handleChange}
-  placeholder="Enter your email"
-/>
+              label="Email"
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Enter your email"
+            />
 
- <Input
-  label="Password"
-  type="password"
-  name="password"
-  value={formData.password}
-  onChange={handleChange}
-  placeholder="Enter your password"
-/>
+            <Input
+              label="Password"
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Enter your password"
+            />
 
             <div className="flex justify-between text-sm">
 
-<label className="flex items-center gap-2 cursor-pointer">
+              <label className="flex items-center gap-2 cursor-pointer">
 
-  <input
-    type="checkbox"
-    name="rememberMe"
-    checked={formData.rememberMe}
-    onChange={handleChange}
-    className="w-4 h-4 accent-indigo-600"
-  />
+                <input
+                  type="checkbox"
+                  name="rememberMe"
+                  checked={formData.rememberMe}
+                  onChange={handleChange}
+                  className="w-4 h-4 accent-indigo-600"
+                />
 
-  <span>
-    Remember me
-  </span>
+                <span>
+                  Remember me
+                </span>
 
-</label>
+              </label>
 
             </div>
 
             <Button type="submit">
-  {loading ? "Signing in..." : "Login"}
-</Button>
+              {loading ? "Signing in..." : "Login"}
+            </Button>
 
           </form>
 

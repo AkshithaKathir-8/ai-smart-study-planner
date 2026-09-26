@@ -1,82 +1,70 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { registerUser } from "../../services/authService";
+import { useAuth } from "../../context/AuthContext";
 
 import Logo from "../../components/ui/Logo";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
 
 function Register() {
-
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
-
     name: "",
     email: "",
     password: "",
     confirmPassword: "",
-
   });
 
+  // If the user is already logged in,
+  // don't allow them to stay on the register page.
+  useEffect(() => {
+    if (user) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [user, navigate]);
+
   const handleChange = (e) => {
-
     setFormData({
-
       ...formData,
       [e.target.name]: e.target.value,
-
     });
-
   };
 
   const handleSubmit = async (e) => {
-
     e.preventDefault();
 
     if (formData.password !== formData.confirmPassword) {
-
       return alert("Passwords do not match");
-
     }
 
     try {
-
       setLoading(true);
 
       await registerUser({
-
         name: formData.name,
         email: formData.email,
         password: formData.password,
-
       });
 
       alert("Registration Successful");
 
       navigate("/login");
-
     } catch (err) {
-
       alert(
-
         err.response?.data?.message ||
-        "Registration Failed"
-
+          "Registration Failed"
       );
-
     } finally {
-
       setLoading(false);
-
     }
-
   };
 
   return (
-
     <div className="min-h-screen flex items-center justify-center bg-slate-100">
 
       <div className="bg-white rounded-3xl shadow-xl p-10 w-full max-w-md">
@@ -84,15 +72,11 @@ function Register() {
         <Logo />
 
         <h1 className="text-3xl font-bold mt-6">
-
           Create Account
-
         </h1>
 
         <p className="text-slate-500 mt-2">
-
           Join KortexAI today.
-
         </p>
 
         <form
@@ -136,11 +120,9 @@ function Register() {
           />
 
           <Button type="submit">
-
             {loading
               ? "Creating Account..."
               : "Register"}
-
           </Button>
 
         </form>
@@ -153,9 +135,7 @@ function Register() {
             to="/login"
             className="text-indigo-600 ml-2"
           >
-
             Login
-
           </Link>
 
         </p>
@@ -163,9 +143,7 @@ function Register() {
       </div>
 
     </div>
-
   );
-
 }
 
 export default Register;
