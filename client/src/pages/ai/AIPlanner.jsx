@@ -5,371 +5,199 @@ import { useEffect, useState } from "react";
 
 import {
   generateStudyPlan,
-  getAIPlans
+  getAIPlans,
 } from "../../services/aiService";
 
-function AIPlanner(){
+function AIPlanner() {
+  const [plan, setPlan] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-const [plan,setPlan] = useState(null);
+  // Generate New AI Plan
+  const generatePlan = async () => {
+    try {
+      setLoading(true);
 
-const [loading,setLoading] = useState(false);
+      const response = await generateStudyPlan({
+        goal: "Semester preparation",
+        days: 7,
+        subjects: [
+          "Machine Learning",
+          "Java",
+          "DBMS",
+        ],
+      });
 
+      console.log("GENERATED PLAN:", response);
 
-// Generate New AI Plan
-const generatePlan = async()=>{
+      setPlan(response.plan);
 
-try{
+      window.dispatchEvent(
+        new Event("ai-study-plan-updated")
+      );
+    } catch (error) {
+      console.log(
+        "AI GENERATION ERROR:",
+        error.response?.data || error.message
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
-setLoading(true);
+  // Load Previous Active Plan
+  useEffect(() => {
+    const loadPlan = async () => {
+      try {
+        const response = await getAIPlans();
 
-const response = await generateStudyPlan({
+        console.log("SAVED PLANS:", response);
 
-    goal:"Semester preparation",
+        if (
+          Array.isArray(response) &&
+          response.length > 0
+        ) {
+          setPlan(response[0]);
+        }
+      } catch (error) {
+        console.log(
+          "LOAD PLAN ERROR:",
+          error.response?.data || error.message
+        );
+      }
+    };
 
-    days:7,
+    loadPlan();
+  }, []);
 
-    subjects:[
+  // Update local plan after completing a session
+  const handleSessionCompleted = (updatedPlan) => {
+    setPlan(updatedPlan);
 
-      "Machine Learning",
-      "Java",
-      "DBMS"
+    window.dispatchEvent(
+      new Event("study-streak-updated")
+    );
+  };
 
-    ]
+  return (
+    <MainLayout>
+      <div className="space-y-8">
 
-});
+        {/* Header */}
 
-console.log(
-"GENERATED PLAN:",
-response
-);
+        <div
+          className="
+            rounded-3xl
+            p-8
+            text-white
+            bg-gradient-to-r
+            from-indigo-600
+            via-purple-600
+            to-pink-600
+            shadow-xl
+          "
+        >
+          <div className="flex items-center gap-4">
 
-setPlan(
-response.plan
-);
+            <div
+              className="
+                bg-white/20
+                p-4
+                rounded-2xl
+              "
+            >
+              <Sparkles size={32} />
+            </div>
 
+            <div>
+              <h1 className="text-4xl font-bold">
+                AI Study Planner
+              </h1>
+
+              <p className="text-indigo-100 mt-2">
+                Personalized learning roadmap powered by AI
+              </p>
+            </div>
+
+          </div>
+
+          <button
+            onClick={generatePlan}
+            className="
+              mt-6
+              bg-white
+              text-indigo-700
+              px-7
+              py-3
+              rounded-xl
+              font-semibold
+              hover:scale-105
+              transition
+            "
+          >
+            {loading
+              ? "Generating..."
+              : "Generate New Plan ✨"}
+          </button>
+        </div>
+
+        {/* Study Plan */}
+
+        {plan?.sessions && (
+          <div className="space-y-10">
+
+            {[
+              ...new Set(
+                plan.sessions.map(
+                  (session) => session.day
+                )
+              ),
+            ].map((day) => (
+              <DayTimeline
+                key={day}
+                day={day}
+                sessions={plan.sessions}
+                planId={plan._id}
+                onSessionCompleted={
+                  handleSessionCompleted
+                }
+              />
+            ))}
+
+          </div>
+        )}
+
+        {/* No Plan */}
+
+        {!plan && !loading && (
+          <div
+            className="
+              bg-white
+              rounded-3xl
+              p-8
+              shadow-lg
+              text-center
+            "
+          >
+            <h2
+              className="
+                text-xl
+                font-semibold
+                text-slate-700
+              "
+            >
+              No AI plan generated yet
+            </h2>
+
+            <p className="text-slate-500 mt-2">
+              Click Generate New Plan to create
+              your personalized roadmap.
+            </p>
+          </div>
+        )}
+
+      </div>
+    </MainLayout>
+  );
 }
-
-catch(error){
-
-console.log(
-"AI GENERATION ERROR:",
-error.response?.data || error.message
-);
-
-}
-
-finally{
-
-setLoading(false);
-
-}
-
-};
-
-// Load Previous Plan
-
-useEffect(()=>{
-
-
-const loadPlan = async()=>{
-
-
-try{
-
-
-const response =
-await getAIPlans();
-
-
-
-console.log(
-"SAVED PLANS:",
-response
-);
-
-if(
-Array.isArray(response) &&
-response.length > 0
-){
-
-if(response?.plan){
-   setPlan(response.plan);
-}
-
-}
-
-
-
-}
-
-catch(error){
-
-
-console.log(
-"LOAD PLAN ERROR:",
-error.response?.data || error.message
-);
-
-
-
-}
-
-
-};
-
-
-
-loadPlan();
-
-
-
-},[]);
-
-
-
-
-
-
-return(
-
-<MainLayout>
-
-
-<div className="space-y-8">
-
-
-
-
-
-<div
-className="
-rounded-3xl
-p-8
-text-white
-bg-gradient-to-r
-from-indigo-600
-via-purple-600
-to-pink-600
-shadow-xl
-"
->
-
-
-<div className="flex items-center gap-4">
-
-
-<div
-className="
-bg-white/20
-p-4
-rounded-2xl
-"
->
-
-
-<Sparkles size={32}/>
-
-
-</div>
-
-
-
-<div>
-
-
-<h1
-className="
-text-4xl
-font-bold
-"
->
-
-AI Study Planner
-
-</h1>
-
-
-
-<p
-className="
-text-indigo-100
-mt-2
-"
->
-
-Personalized learning roadmap powered by AI
-
-</p>
-
-
-
-</div>
-
-
-
-</div>
-
-
-
-
-<button
-
-onClick={generatePlan}
-
-className="
-mt-6
-bg-white
-text-indigo-700
-px-7
-py-3
-rounded-xl
-font-semibold
-hover:scale-105
-transition
-"
-
->
-
-
-{
-
-loading
-
-?
-
-"Generating..."
-
-:
-
-"Generate New Plan ✨"
-
-}
-
-
-
-</button>
-
-
-
-
-</div>
-
-
-
-
-
-
-
-{
-
-plan?.sessions &&
-
-<div className="space-y-10">
-
-
-{
-
-[
-
-...new Set(
-
-plan.sessions.map(
-
-(session)=>session.day
-
-)
-
-)
-
-]
-
-
-.map((day)=>(
-
-
-<DayTimeline
-
-key={day}
-
-day={day}
-
-sessions={plan.sessions}
-
-/>
-
-
-
-))
-
-
-}
-
-
-
-</div>
-
-
-}
-
-
-
-
-
-
-{
-
-!plan && !loading &&
-
-<div
-className="
-bg-white
-rounded-3xl
-p-8
-shadow-lg
-text-center
-"
->
-
-<h2 className="
-text-xl
-font-semibold
-text-slate-700
-">
-
-No AI plan generated yet
-
-</h2>
-
-
-<p className="
-text-slate-500
-mt-2
-">
-
-Click Generate New Plan to create your personalized roadmap.
-
-</p>
-
-
-</div>
-
-
-}
-
-
-
-
-</div>
-
-
-
-</MainLayout>
-
-
-);
-
-
-}
-
 
 export default AIPlanner;

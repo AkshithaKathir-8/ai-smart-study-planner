@@ -18,7 +18,6 @@ import { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../services/api";
-import { getAIPlans } from "../../services/aiService";
 import Logo from "../ui/Logo";
 
 const mainMenu = [
@@ -87,31 +86,34 @@ function Sidebar() {
   useEffect(() => {
     let mounted = true;
 
-    const loadStreak = async () => {
-      try {
-       const response = await getAIPlans();
+const getLocalDate = () => {
+  const today = new Date();
 
-const plans = Array.isArray(response)
-  ? response
-  : Array.isArray(response?.plans)
-  ? response.plans
-  : [];
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
 
-const latestPlan = plans[0];
+  return `${year}-${month}-${day}`;
+};
 
-if (mounted) {
-  setCurrentStreak(
-    Number(latestPlan?.currentStreak ?? 0)
-  );
-}
-      } catch (error) {
-        console.error(
-          "SIDEBAR STREAK LOAD ERROR:",
-          error.response?.data || error.message
-        );
-      }
-    };
+const loadStreak = async () => {
+  try {
+    const response = await api.get(
+      `/planner/streak?localDate=${getLocalDate()}`
+    );
 
+    if (mounted) {
+      setCurrentStreak(
+        Number(response.data?.currentStreak ?? 0)
+      );
+    }
+  } catch (error) {
+    console.error(
+      "SIDEBAR STREAK LOAD ERROR:",
+      error
+    );
+  }
+};
     loadStreak();
 
     window.addEventListener("study-streak-updated", loadStreak);

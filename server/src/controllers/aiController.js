@@ -887,32 +887,33 @@ const markPlanSessionCompleted = async (req, res) => {
       sessionsForDay.length > 0 &&
       sessionsForDay.every((item) => item.completed);
 
-    if (dayIsComplete) {
-      const existingDayRecord = plan.dailyCompletions.find(
-        (item) => item.day === session.day
-      );
-      if (dayIsComplete) {
-  await addStreakEntry({
-    userId: req.user.id,
-    recordId: `ai-${plan._id}-day-${session.day}`,
-    sourceType: "AI Coach",
-    completionDate: localDate,
-  });
+if (dayIsComplete) {
+  const existingDayRecord = plan.dailyCompletions.find(
+    (item) => item.day === session.day
+  );
+
+  // Only create the streak entry once for this plan day.
+  if (!existingDayRecord) {
+    await addStreakEntry({
+      userId: req.user.id,
+      recordId: `ai-${plan._id}-day-${session.day}`,
+      sourceType: "AI Coach",
+      completionDate: localDate,
+    });
+
+    // Save one completion record per plan day.
+    plan.dailyCompletions.push({
+      day: session.day,
+      completionDate: localDate,
+      completedAt: new Date(),
+    });
+  }
 }
 
-      // Save one completion record per plan day.
-      if (!existingDayRecord) {
-        plan.dailyCompletions.push({
-          day: session.day,
-          completionDate: localDate,
-          completedAt: new Date(),
-        });
-      }
-    }
-
-const streakData = await getStreakData(req.user.id, localDate);
-plan.currentStreak = streakData.currentStreak;
-
+plan.currentStreak = calculateStreak(
+  plan.dailyCompletions,
+  localDate
+);
     await plan.save();
 
     return res.status(200).json({
