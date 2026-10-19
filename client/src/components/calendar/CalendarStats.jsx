@@ -1,27 +1,42 @@
-function CalendarStats({ events }) {
+function CalendarStats({ events = [] }) {
+  const today = new Date();
 
-  const today = new Date().toISOString().split("T")[0];
+  const todayString =
+    `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
   const totalEvents = events.length;
 
-  const todayEvents = events.filter(
-    (event) => event.date === today
-  ).length;
+  const todayEvents = events.filter((event) => {
+    if (!event.date) return false;
 
-  const upcomingEvents = events.filter(
-    (event) => event.date >= today
-  ).length;
+    const eventDate = new Date(event.date);
+
+    const eventDateString =
+      `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, "0")}-${String(eventDate.getDate()).padStart(2, "0")}`;
+
+    return eventDateString === todayString;
+  }).length;
+
+  const upcomingEvents = events.filter((event) => {
+    if (!event.date) return false;
+
+    const eventDate = new Date(event.date);
+
+    const eventDateString =
+      `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, "0")}-${String(eventDate.getDate()).padStart(2, "0")}`;
+
+    return eventDateString >= todayString;
+  }).length;
 
   const studyEvents = events.filter(
-    (event) => event.type === "Study"
+    (event) =>
+      event.type?.toLowerCase() === "study"
   ).length;
 
   return (
-
     <div className="grid md:grid-cols-4 gap-6">
 
       <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
-
         <p className="text-slate-500">
           Total Events
         </p>
@@ -29,11 +44,9 @@ function CalendarStats({ events }) {
         <h2 className="text-3xl font-bold mt-3">
           {totalEvents}
         </h2>
-
       </div>
 
       <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
-
         <p className="text-slate-500">
           Today's Events
         </p>
@@ -41,11 +54,9 @@ function CalendarStats({ events }) {
         <h2 className="text-3xl font-bold mt-3">
           {todayEvents}
         </h2>
-
       </div>
 
       <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
-
         <p className="text-slate-500">
           Upcoming
         </p>
@@ -53,11 +64,9 @@ function CalendarStats({ events }) {
         <h2 className="text-3xl font-bold mt-3">
           {upcomingEvents}
         </h2>
-
       </div>
 
       <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
-
         <p className="text-slate-500">
           Study Events
         </p>
@@ -65,13 +74,10 @@ function CalendarStats({ events }) {
         <h2 className="text-3xl font-bold mt-3">
           {studyEvents}
         </h2>
-
       </div>
 
     </div>
-
   );
-
 }
 
 export default CalendarStats;

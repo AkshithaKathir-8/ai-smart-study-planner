@@ -16,9 +16,6 @@ export function NotesProvider({ children }) {
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // =========================
-  // Load Notes
-  // =========================
   const loadNotes = async () => {
     try {
       setLoading(true);
@@ -38,9 +35,6 @@ export function NotesProvider({ children }) {
     }
   };
 
-  // =========================
-  // Load when user is logged in
-  // =========================
   useEffect(() => {
     if (user) {
       loadNotes();
@@ -50,17 +44,41 @@ export function NotesProvider({ children }) {
     }
   }, [user]);
 
-  // =========================
-  // Add Note
-  // =========================
-  const addNote = async (note) => {
+
+  // ADD NORMAL TEXT NOTE OR UPLOADED STUDY MATERIAL
+  const addNote = async (note, file = null) => {
     try {
-      const res = await api.post("/notes", note);
+      let res;
+
+      if (file) {
+        const formData = new FormData();
+
+        formData.append("title", note.title);
+        formData.append("subject", note.subject);
+        formData.append(
+          "description",
+          note.description || ""
+        );
+        formData.append(
+          "pinned",
+          note.pinned ? "true" : "false"
+        );
+        formData.append("file", file);
+
+        res = await api.post(
+          "/notes/upload",
+          formData
+        );
+      } else {
+        res = await api.post("/notes", note);
+      }
 
       setNotes((prev) => [
         res.data,
         ...prev,
       ]);
+
+      return res.data;
     } catch (err) {
       console.error(
         "Add note failed:",
@@ -71,42 +89,82 @@ export function NotesProvider({ children }) {
     }
   };
 
-  // =========================
-  // Update Note
-  // =========================
-  const updateNote = async (note) => {
-    try {
-      const res = await api.put(
+
+ const updateNote = async (
+  note,
+  file = null
+) => {
+  try {
+    let res;
+
+    if (file) {
+      const formData = new FormData();
+
+      formData.append(
+        "title",
+        note.title
+      );
+
+      formData.append(
+        "subject",
+        note.subject
+      );
+
+      formData.append(
+        "description",
+        note.description || ""
+      );
+
+      formData.append(
+        "pinned",
+        note.pinned ? "true" : "false"
+      );
+
+      formData.append(
+        "file",
+        file
+      );
+
+      res = await api.put(
+        `/notes/${note._id}`,
+        formData
+      );
+    } else {
+      res = await api.put(
         `/notes/${note._id}`,
         note
       );
-
-      setNotes((prev) =>
-        prev.map((n) =>
-          n._id === note._id
-            ? res.data
-            : n
-        )
-      );
-    } catch (err) {
-      console.error(
-        "Update note failed:",
-        err.response?.data || err.message
-      );
-
-      throw err;
     }
-  };
 
-  // =========================
-  // Delete Note
-  // =========================
+    setNotes((prev) =>
+      prev.map((n) =>
+        n._id === note._id
+          ? res.data
+          : n
+      )
+    );
+
+    return res.data;
+  } catch (err) {
+    console.error(
+      "Update note failed:",
+      err.response?.data ||
+        err.message
+    );
+
+    throw err;
+  }
+};
+
+
   const deleteNote = async (id) => {
     try {
       await api.delete(`/notes/${id}`);
 
       setNotes((prev) =>
-        prev.filter((n) => n._id !== id)
+        prev.filter(
+          (n) => n._id !== id
+        )
       );
     } catch (err) {
       console.error(
@@ -118,9 +176,7 @@ export function NotesProvider({ children }) {
     }
   };
 
-  // =========================
-  // Toggle Pin
-  // =========================
+
   const togglePin = async (id) => {
     try {
       const res = await api.patch(
@@ -144,6 +200,76 @@ export function NotesProvider({ children }) {
     }
   };
 
+  const generateNoteSummary = async (id) => {
+  try {
+    const res = await api.post(
+      `/notes/${id}/ai-summary`
+    );
+
+    setNotes((prev) =>
+      prev.map((note) =>
+        note._id === id
+          ? res.data.note
+          : note
+      )
+    );
+
+    return res.data;
+  } catch (err) {
+    console.error(
+      "Generate note summary failed:",
+      err.response?.data || err.message
+    );
+
+    throw err;
+  }
+};
+
+const generateTwoMarkQuestions = async (id) => {
+  try {
+    const res = await api.post(
+      `/notes/${id}/two-mark-questions`
+    );
+
+    setNotes((prev) =>
+      prev.map((note) =>
+        note._id === id
+          ? res.data.note
+          : note
+      )
+    );
+
+    return res.data;
+  } catch (err) {
+    console.error(
+      "Generate 2-mark questions failed:",
+      err.response?.data || err.message
+    );
+
+    throw err;
+  }
+};
+
+const generateNoteQuiz = async (id) => {
+  try {
+    const res = await api.post(
+      `/notes/${id}/generate-quiz`,
+      {
+        count: 5,
+        difficulty: "Medium",
+      }
+    );
+
+    return res.data;
+  } catch (err) {
+    console.error(
+      "Generate note quiz failed:",
+      err.response?.data || err.message
+    );
+
+    throw err;
+  }
+};
   return (
     <NotesContext.Provider
       value={{
@@ -154,12 +280,17 @@ export function NotesProvider({ children }) {
         deleteNote,
         togglePin,
         loadNotes,
+        generateNoteSummary,
+        generateTwoMarkQuestions,
+        generateNoteQuiz,
+
       }}
     >
       {children}
     </NotesContext.Provider>
   );
 }
+
 
 export function useNotes() {
   return useContext(NotesContext);

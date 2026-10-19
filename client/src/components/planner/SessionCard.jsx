@@ -124,12 +124,20 @@ function SessionCard({
 
         </button>
 
-        <button
-          onClick={() => onDelete(session._id)}
-          className="rounded-xl py-2 bg-red-100 text-red-600 hover:bg-red-200 transition"
-        >
-          Delete
-        </button>
+<button
+  onClick={() => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${session.topic}"?`
+    );
+
+    if (confirmed) {
+      onDelete(session._id);
+    }
+  }}
+  className="rounded-xl py-2 bg-red-100 text-red-600 hover:bg-red-200 transition"
+>
+  Delete
+</button>
 
       </div>
 

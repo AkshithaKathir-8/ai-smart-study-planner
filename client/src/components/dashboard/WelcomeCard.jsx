@@ -30,74 +30,70 @@ function WelcomeCard() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45 }}
       className="
-      relative
-      overflow-hidden
-      rounded-[2rem]
-      p-10
-      text-white
-      bg-gradient-to-r
-      from-indigo-600
-      via-purple-600
-      to-fuchsia-600
-      shadow-2xl
+        relative
+        overflow-hidden
+        rounded-[2rem]
+        p-10
+        text-white
+        bg-gradient-to-r
+        from-indigo-600
+        via-purple-600
+        to-fuchsia-600
+        shadow-2xl
       "
     >
+      {/* Existing soft glow */}
       <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-white/10 blur-3xl" />
 
       <div className="absolute bottom-0 left-0 w-56 h-56 rounded-full bg-white/5 blur-3xl" />
 
-      <div className="relative">
+      {/* Subtle Kortex AI background circles */}
+      <div className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-indigo-300/15" />
 
+<div className="absolute right-20 -bottom-32 h-80 w-80 rounded-full bg-violet-300/12" />
+
+      <div className="relative z-10">
         <div className="flex items-center gap-2 text-indigo-100">
-
           <Sparkles size={18} />
 
           <span className="font-medium">
             Kortex AI Smart Study Planner
           </span>
-
         </div>
 
         <h1 className="text-4xl font-bold mt-5">
-
           {greeting},{" "}
           {user?.name || "Student"} 👋
-
         </h1>
 
         <p className="mt-4 max-w-2xl text-lg text-indigo-100 leading-8">
-
           Stay focused, organize your academic journey, monitor your
           performance, and let AI help you study smarter every day.
-
         </p>
 
         <div className="flex items-center gap-2 mt-6 text-indigo-100">
-
           <CalendarDays size={18} />
 
           <span>{today}</span>
-
         </div>
 
-      <button
-  onClick={() => navigate("/ai")}
-  className="
-    mt-8
-    bg-white
-    text-indigo-700
-    px-7
-    py-3
-    rounded-2xl
-    font-semibold
-    hover:scale-105
-    transition
-    shadow-lg
-  "
->
-  Open AI Planner ✨
-</button>
-
+        <button
+          onClick={() => navigate("/ai")}
+          className="
+            mt-8
+            bg-white
+            text-indigo-700
+            px-7
+            py-3
+            rounded-2xl
+            font-semibold
+            hover:scale-105
+            transition
+            shadow-lg
+          "
+        >
+          Open AI Planner ✨
+        </button>
       </div>
     </motion.div>
   );

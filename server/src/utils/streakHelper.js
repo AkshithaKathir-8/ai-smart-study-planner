@@ -1,7 +1,10 @@
 const StudyStreak = require("../models/StudyStreak");
 
 const isValidLocalDate = (value) => {
-  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+  if (
+    typeof value !== "string" ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(value)
+  ) {
     return false;
   }
 
@@ -14,7 +17,9 @@ const isValidLocalDate = (value) => {
 };
 
 const calculateStreak = (entries, referenceDate) => {
-  if (!isValidLocalDate(referenceDate)) return 0;
+  if (!isValidLocalDate(referenceDate)) {
+    return 0;
+  }
 
   const completedDates = new Set(
     entries
@@ -22,11 +27,19 @@ const calculateStreak = (entries, referenceDate) => {
       .filter(isValidLocalDate)
   );
 
-  const yesterdayDate = new Date(`${referenceDate}T00:00:00.000Z`);
-  yesterdayDate.setUTCDate(yesterdayDate.getUTCDate() - 1);
-  const yesterday = yesterdayDate.toISOString().slice(0, 10);
+  const yesterdayDate = new Date(
+    `${referenceDate}T00:00:00.000Z`
+  );
 
-  // A streak remains active if the user studied today or yesterday.
+  yesterdayDate.setUTCDate(
+    yesterdayDate.getUTCDate() - 1
+  );
+
+  const yesterday =
+    yesterdayDate.toISOString().slice(0, 10);
+
+  // Streak remains active if the user completed
+  // something today or yesterday.
   if (
     !completedDates.has(referenceDate) &&
     !completedDates.has(yesterday)
@@ -40,12 +53,20 @@ const calculateStreak = (entries, referenceDate) => {
 
   let streak = 0;
 
+  // Count calendar days, not individual sessions.
   while (completedDates.has(currentDate)) {
     streak++;
 
-    const previousDate = new Date(`${currentDate}T00:00:00.000Z`);
-    previousDate.setUTCDate(previousDate.getUTCDate() - 1);
-    currentDate = previousDate.toISOString().slice(0, 10);
+    const previousDate = new Date(
+      `${currentDate}T00:00:00.000Z`
+    );
+
+    previousDate.setUTCDate(
+      previousDate.getUTCDate() - 1
+    );
+
+    currentDate =
+      previousDate.toISOString().slice(0, 10);
   }
 
   return streak;
@@ -60,7 +81,10 @@ const addStreakEntry = async ({
   let streak = await StudyStreak.findOne({ userId });
 
   if (!streak) {
-    streak = new StudyStreak({ userId, entries: [] });
+    streak = new StudyStreak({
+      userId,
+      entries: [],
+    });
   }
 
   const existing = streak.entries.find(
@@ -79,29 +103,44 @@ const addStreakEntry = async ({
   }
 
   await streak.save();
+
   return streak;
 };
 
-const removeStreakEntry = async ({ userId, recordId }) => {
+const removeStreakEntry = async ({
+  userId,
+  recordId,
+}) => {
   const streak = await StudyStreak.findOne({ userId });
 
-  if (!streak) return null;
+  if (!streak) {
+    return null;
+  }
 
   streak.entries = streak.entries.filter(
     (entry) => entry.recordId !== recordId
   );
 
   await streak.save();
+
   return streak;
 };
 
-const getStreakData = async (userId, referenceDate) => {
-  const streak = await StudyStreak.findOne({ userId });
+const getStreakData = async (
+  userId,
+  referenceDate
+) => {
+  const streak = await StudyStreak.findOne({
+    userId,
+  });
 
   const entries = streak?.entries || [];
 
   return {
-    currentStreak: calculateStreak(entries, referenceDate),
+    currentStreak: calculateStreak(
+      entries,
+      referenceDate
+    ),
     entries,
   };
 };

@@ -1,12 +1,18 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import {
   generateQuiz as generateQuizAPI,
   saveQuiz,
 } from "../../services/aiService";
 import { useSubjects } from "../../context/SubjectContext";
+import { useNotes } from "../../context/NotesContext";
 
 function AIQuiz() {
+  const location = useLocation();
+
+const [noteQuizSource, setNoteQuizSource] = useState(null);
   const { subjects, loading: subjectsLoading } = useSubjects();
+  const { generateNoteQuiz } = useNotes();
 
   const [subjectId, setSubjectId] = useState("");
   const [topic, setTopic] = useState("");
@@ -26,57 +32,120 @@ function AIQuiz() {
   const selectedSubject = subjects.find(
     (subject) => subject._id === subjectId
   );
+  useEffect(() => {
+  const generatedQuiz = location.state?.generatedQuiz;
+  const source = location.state?.source;
 
-  const generateQuiz = async () => {
-    if (!subjectId) {
-      setError("Please select a subject.");
-      return;
+  if (!Array.isArray(generatedQuiz) || generatedQuiz.length === 0) {
+    return;
+  }
+
+  if (!source?.subjectId) {
+    setError("The study material's subject could not be identified.");
+    return;
+  }
+
+  setSubjectId(source.subjectId);
+  setTopic(source.title || source.fileName || "Uploaded Study Material");
+
+  setQuiz(
+    generatedQuiz.map((question) => ({
+      question: question.question,
+      options: question.options,
+      correctAnswer: question.answer,
+      explanation: question.explanation || "",
+    }))
+  );
+
+  setAnswers({});
+  setScore(null);
+  setSubmitted(false);
+  setSaved(false);
+  setError("");
+
+  setNoteQuizSource(source);
+}, [location.key]);
+
+const generateQuiz = async () => {
+  if (!subjectId) {
+    setError("Please select a subject.");
+    return;
+  }
+
+  setGenerating(true);
+  setError("");
+  setQuiz([]);
+  setAnswers({});
+  setScore(null);
+  setSubmitted(false);
+  setSaved(false);
+
+  try {
+    let response;
+
+    // ============================================
+    // QUIZ GENERATED FROM UPLOADED STUDY MATERIAL
+    // ============================================
+    if (noteQuizSource?.noteId) {
+      response = await generateNoteQuiz(
+        noteQuizSource.noteId
+      );
     }
 
-    setGenerating(true);
-    setError("");
-    setQuiz([]);
-    setAnswers({});
-    setScore(null);
-    setSubmitted(false);
-    setSaved(false);
-
-    try {
-      const response = await generateQuizAPI({
+    // ============================================
+    // NORMAL TOPIC-BASED AI QUIZ
+    // ============================================
+    else {
+      response = await generateQuizAPI({
         subject: selectedSubject.name,
         topic: topic.trim(),
         difficulty: "Medium",
         count: 5,
       });
+    }
 
-      if (
-        !response ||
-        !Array.isArray(response.quiz) ||
-        response.quiz.length === 0
-      ) {
-        throw new Error("The AI did not return any questions.");
-      }
+    if (
+      !response ||
+      !Array.isArray(response.quiz) ||
+      response.quiz.length === 0
+    ) {
+      throw new Error(
+        "The AI did not return any questions."
+      );
+    }
 
-      const formattedQuiz = response.quiz.map((question) => ({
+    const formattedQuiz =
+      response.quiz.map((question) => ({
         question: question.question,
         options: question.options,
-        correctAnswer: question.answer,
-        explanation: question.explanation || "",
+        correctAnswer:
+          question.answer,
+        explanation:
+          question.explanation || "",
       }));
 
-      setQuiz(formattedQuiz);
-    } catch (err) {
-      console.error("Quiz generation failed:", err);
+    setQuiz(formattedQuiz);
 
-      setError(
-        err.response?.data?.message ||
-          err.message ||
-          "Failed to generate quiz."
-      );
-    } finally {
-      setGenerating(false);
+    // Keep the note source after generating a new quiz
+    if (response.source) {
+      setNoteQuizSource(response.source);
     }
-  };
+
+  } catch (err) {
+    console.error(
+      "Quiz generation failed:",
+      err
+    );
+
+    setError(
+      err.response?.data?.message ||
+        err.message ||
+        "Failed to generate quiz."
+    );
+  } finally {
+    setGenerating(false);
+  }
+};
 
   const selectAnswer = (questionIndex, option) => {
     setAnswers((previous) => ({
@@ -139,20 +208,52 @@ function AIQuiz() {
 
   return (
     <div className="p-6 md:p-8">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-indigo-600">
-          🧠 AI Quiz Generator
-        </h1>
+<div className="mb-8">
+  <div className="flex items-center gap-4">
+    <div className="
+      flex
+      h-14
+      w-14
+      items-center
+      justify-center
+      rounded-2xl
+      bg-gradient-to-br
+      from-indigo-600
+      to-violet-600
+      text-2xl
+      text-white
+      shadow-md
+    ">
+      🧠
+    </div>
 
-        <p className="mt-2 text-slate-500">
-          Generate a quiz, test your knowledge, and save your results.
-        </p>
-      </div>
+    <div>
+      <h1 className="
+        text-3xl
+        font-bold
+        text-slate-800
+        md:text-4xl
+      ">
+        AI Quiz Generator
+      </h1>
 
-      <div className="mb-6 rounded-3xl bg-white p-6 shadow">
-        <label className="mb-2 block font-medium text-slate-700">
-          Subject
-        </label>
+      <p className="mt-1 text-slate-500">
+        Create personalized quizzes and test your knowledge with AI.
+      </p>
+    </div>
+  </div>
+</div>
+
+ <div className="mb-6 rounded-3xl bg-white p-6 shadow">
+        <label className="
+  mb-2
+  block
+  text-sm
+  font-semibold
+  text-slate-700
+">
+  Subject
+</label>
 
         <select
           className="mb-4 w-full rounded-xl border border-slate-300 p-3"
@@ -173,12 +274,17 @@ function AIQuiz() {
           ))}
         </select>
 
-        <label className="mb-2 block font-medium text-slate-700">
-          Topic (optional)
-        </label>
-
+<label className="
+  mb-2
+  block
+  text-sm
+  font-semibold
+  text-slate-700
+">
+  Topic (optional)
+</label>
         <input
-          className="mb-4 w-full rounded-xl border border-slate-300 p-3"
+     className="mb-4 w-full rounded-xl border border-slate-300 p-3"
           placeholder="Enter a topic, for example: DBMS Normalization"
           value={topic}
           onChange={(event) => setTopic(event.target.value)}
@@ -188,7 +294,7 @@ function AIQuiz() {
         <button
           onClick={generateQuiz}
           disabled={generating || subjectsLoading || subjects.length === 0}
-          className="rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-3 font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
+className="rounded-xl bg-indigo-600 px-6 py-3 font-medium text-white disabled:opacity-60"
         >
           {generating ? "Generating..." : "Generate Quiz"}
         </button>
@@ -207,13 +313,28 @@ function AIQuiz() {
       )}
 
       {quiz.length > 0 && (
-        <div className="rounded-3xl bg-white p-6 shadow">
-          <div className="mb-6">
-            <h2 className="text-xl font-bold text-slate-800">
-              {selectedSubject?.name}
-              {topic.trim() ? ` — ${topic}` : ""}
-            </h2>
+<div className="rounded-3xl bg-white p-6 shadow">
+            <div className="mb-6">
+<h2 className="
+  text-xl
+  font-bold
+  leading-snug
+  text-slate-800
+  md:text-2xl
+">
+  {selectedSubject?.name || noteQuizSource?.subjectName || "AI Quiz"}
+  {noteQuizSource
+    ? ` — ${noteQuizSource.title || noteQuizSource.fileName || "Uploaded Study Material"}`
+    : topic.trim()
+      ? ` — ${topic}`
+      : ""}
+</h2>
 
+{noteQuizSource && (
+  <p className="mt-2 inline-flex rounded-full bg-indigo-50 px-3 py-1 text-sm font-medium text-indigo-700">
+    Generated from your study material
+  </p>
+)}
             <p className="mt-1 text-sm text-slate-500">
               {quiz.length} questions · Medium difficulty
             </p>
@@ -225,13 +346,13 @@ function AIQuiz() {
             const correct = selected === question.correctAnswer;
 
             return (
-              <div
-                key={index}
-                className="mb-8 border-b border-slate-100 pb-6 last:border-b-0"
-              >
-                <h3 className="mb-4 text-lg font-semibold text-slate-800">
-                  {index + 1}. {question.question}
-                </h3>
+<div
+  key={index}
+  className="mb-8 border-b border-slate-100 pb-6 last:border-b-0"
+>
+<h3 className="mb-4 text-lg font-semibold text-slate-800">
+  {index + 1}. {question.question}
+</h3>
 
                 <div className="space-y-3">
                   {question.options.map((option, optionIndex) => {
@@ -254,8 +375,7 @@ function AIQuiz() {
                     return (
                       <label
                         key={`${index}-${optionIndex}`}
-                        className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 ${optionStyle}`}
-                      >
+className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 ${optionStyle}`}              >
                         <input
                           type="radio"
                           name={`question-${index}`}
@@ -272,7 +392,9 @@ function AIQuiz() {
                           {letter}.
                         </span>
 
-                        <span>{option}</span>
+                        <span className="leading-relaxed text-slate-700">
+  {option}
+</span>
                       </label>
                     );
                   })}
@@ -310,7 +432,7 @@ function AIQuiz() {
             <button
               onClick={checkAnswers}
               disabled={saving}
-              className="rounded-xl bg-green-600 px-6 py-3 font-medium text-white disabled:opacity-60"
+            className="rounded-xl bg-green-600 px-6 py-3 font-medium text-white disabled:opacity-60"
             >
               Submit Quiz
             </button>
@@ -318,32 +440,32 @@ function AIQuiz() {
 
           {submitted && (
             <div className="mt-6">
-              <div className="mb-4 rounded-2xl bg-indigo-50 p-5">
-                <h2 className="text-2xl font-bold text-indigo-700">
-                  Score: {score}/{quiz.length}
-                </h2>
+     <div className="mb-4 rounded-2xl bg-indigo-50 p-5">
+  <h2 className="text-2xl font-bold text-indigo-700">
+    Score: {score}/{quiz.length}
+  </h2>
 
-                <p className="mt-1 text-slate-600">
-                  {Math.round((score / quiz.length) * 100)}% correct
-                </p>
-              </div>
+  <p className="mt-1 text-slate-600">
+    {Math.round((score / quiz.length) * 100)}% correct
+  </p>
+</div>
 
               {saving && (
-                <p className="mb-4 text-sm text-indigo-600">
-                  Saving your quiz result...
-                </p>
-              )}
+<p className="mb-4 text-sm text-indigo-600">
+  Saving your quiz result...
+</p>
+    )}
 
               {saved && (
-                <p className="mb-4 text-sm font-medium text-green-700">
-                  ✓ Quiz result saved successfully.
-                </p>
+<p className="mb-4 text-sm font-medium text-green-700">
+  ✓ Quiz result saved successfully.
+</p>
               )}
 
               <div className="flex flex-wrap gap-3">
                 <button
                   onClick={tryAgain}
-                  className="rounded-xl bg-indigo-600 px-6 py-3 font-medium text-white"
+                      className="rounded-xl bg-indigo-600 px-6 py-3 font-medium text-white"
                 >
                   Try Again
                 </button>
@@ -351,7 +473,7 @@ function AIQuiz() {
                 <button
                   onClick={generateQuiz}
                   disabled={generating}
-                  className="rounded-xl bg-violet-600 px-6 py-3 font-medium text-white disabled:opacity-60"
+                className="rounded-xl bg-violet-600 px-6 py-3 font-medium text-white disabled:opacity-60"
                 >
                   {generating ? "Generating..." : "Generate New Quiz"}
                 </button>

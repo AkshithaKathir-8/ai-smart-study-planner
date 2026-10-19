@@ -1,5 +1,7 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
+const fs = require("fs");
+const path = require("path");
 
 // GET USER PROFILE
 exports.getProfile = async (req, res) => {
@@ -23,7 +25,11 @@ exports.getProfile = async (req, res) => {
 // UPDATE USER PROFILE
 exports.updateProfile = async (req, res) => {
   try {
-    const { name, email, notificationsEnabled } = req.body;
+    const {
+      name,
+      email,
+      notificationsEnabled,
+    } = req.body;
 
     const user = await User.findById(req.user.id);
 
@@ -34,7 +40,10 @@ exports.updateProfile = async (req, res) => {
     }
 
     // Check if another account already uses this email
-    if (email && email.toLowerCase() !== user.email) {
+    if (
+      email &&
+      email.toLowerCase() !== user.email
+    ) {
       const existingUser = await User.findOne({
         email: email.toLowerCase(),
         _id: { $ne: user._id },
@@ -55,8 +64,11 @@ exports.updateProfile = async (req, res) => {
       user.email = email.toLowerCase().trim();
     }
 
-    if (typeof notificationsEnabled === "boolean") {
-      user.notificationsEnabled = notificationsEnabled;
+    if (
+      typeof notificationsEnabled === "boolean"
+    ) {
+      user.notificationsEnabled =
+        notificationsEnabled;
     }
 
     await user.save();
@@ -67,10 +79,91 @@ exports.updateProfile = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        notificationsEnabled: user.notificationsEnabled,
+        notificationsEnabled:
+          user.notificationsEnabled,
+        profileImage: user.profileImage,
       },
     });
   } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+// UPLOAD PROFILE IMAGE
+exports.uploadProfileImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        message: "Please select an image.",
+      });
+    }
+
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      // Remove newly uploaded file if user does not exist
+      if (
+        req.file.path &&
+        fs.existsSync(req.file.path)
+      ) {
+        fs.unlinkSync(req.file.path);
+      }
+
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    const oldProfileImage =
+      user.profileImage || "";
+
+    // Save new image path
+    user.profileImage =
+      `/uploads/profiles/${req.file.filename}`;
+
+    await user.save();
+
+    // Delete previous profile image
+    if (
+      oldProfileImage &&
+      oldProfileImage.startsWith(
+        "/uploads/profiles/"
+      )
+    ) {
+      const oldFilePath = path.join(
+        __dirname,
+        "../../uploads/profiles",
+        path.basename(oldProfileImage)
+      );
+
+      if (fs.existsSync(oldFilePath)) {
+        fs.unlinkSync(oldFilePath);
+      }
+    }
+
+    res.json({
+      message:
+        "Profile photo updated successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        notificationsEnabled:
+          user.notificationsEnabled,
+        profileImage: user.profileImage,
+      },
+    });
+  } catch (error) {
+    // Remove newly uploaded file if something fails
+    if (
+      req.file?.path &&
+      fs.existsSync(req.file.path)
+    ) {
+      fs.unlinkSync(req.file.path);
+    }
+
     res.status(500).json({
       message: error.message,
     });
@@ -85,15 +178,20 @@ exports.changePassword = async (req, res) => {
       newPassword,
     } = req.body;
 
-    if (!currentPassword || !newPassword) {
+    if (
+      !currentPassword ||
+      !newPassword
+    ) {
       return res.status(400).json({
-        message: "Current password and new password are required",
+        message:
+          "Current password and new password are required",
       });
     }
 
     if (newPassword.length < 6) {
       return res.status(400).json({
-        message: "New password must be at least 6 characters",
+        message:
+          "New password must be at least 6 characters",
       });
     }
 
@@ -112,7 +210,8 @@ exports.changePassword = async (req, res) => {
 
     if (!isMatch) {
       return res.status(400).json({
-        message: "Current password is incorrect",
+        message:
+          "Current password is incorrect",
       });
     }
 
@@ -126,7 +225,8 @@ exports.changePassword = async (req, res) => {
     await user.save();
 
     res.json({
-      message: "Password changed successfully",
+      message:
+        "Password changed successfully",
     });
   } catch (error) {
     res.status(500).json({

@@ -55,6 +55,26 @@ export function PlannerProvider({ children }) {
 
   }, [user]);
 
+  useEffect(() => {
+  const handleSubjectDeleted = () => {
+    if (user) {
+      fetchSessions();
+    }
+  };
+
+  window.addEventListener(
+    "subjectDeleted",
+    handleSubjectDeleted
+  );
+
+  return () => {
+    window.removeEventListener(
+      "subjectDeleted",
+      handleSubjectDeleted
+    );
+  };
+}, [user]);
+
   // Add Session
   const addSession = async (data) => {
 

@@ -1,50 +1,126 @@
-function AttendanceStats({ records }) {
+import {
+  BookOpen,
+  CheckCircle2,
+  TrendingUp,
+} from "lucide-react";
 
+function AttendanceStats({ records }) {
   const totalClasses = records.reduce(
-    (acc, r) => acc + r.total,
+    (acc, r) => acc + Number(r.total || 0),
     0
   );
 
   const totalAttended = records.reduce(
-    (acc, r) => acc + r.attended,
+    (acc, r) => acc + Number(r.attended || 0),
     0
   );
 
   const overall =
     totalClasses === 0
       ? 0
-      : Math.round((totalAttended / totalClasses) * 100);
+      : Math.round(
+          (totalAttended / totalClasses) * 100
+        );
 
-  const getStatusColor = () => {
-    if (overall >= 85) return "text-emerald-600";
-    if (overall >= 75) return "text-orange-500";
-    return "text-red-500";
+  const getStatus = () => {
+    if (overall >= 85) {
+      return {
+        label: "Excellent",
+        color: "text-emerald-600",
+        bg: "bg-emerald-50",
+      };
+    }
+
+    if (overall >= 75) {
+      return {
+        label: "On Track",
+        color: "text-orange-600",
+        bg: "bg-orange-50",
+      };
+    }
+
+    return {
+      label: "Needs Attention",
+      color: "text-red-600",
+      bg: "bg-red-50",
+    };
   };
 
+  const status = getStatus();
+
+  const stats = [
+    {
+      title: "Total Classes",
+      value: totalClasses,
+      subtitle: "Classes recorded",
+      icon: BookOpen,
+      iconBg: "bg-indigo-50",
+      iconColor: "text-indigo-600",
+    },
+    {
+      title: "Classes Attended",
+      value: totalAttended,
+      subtitle: "Successfully attended",
+      icon: CheckCircle2,
+      iconBg: "bg-emerald-50",
+      iconColor: "text-emerald-600",
+    },
+    {
+      title: "Overall Attendance",
+      value: `${overall}%`,
+      subtitle: status.label,
+      icon: TrendingUp,
+      iconBg: status.bg,
+      iconColor: status.color,
+      valueColor: status.color,
+    },
+  ];
+
   return (
-    <div className="grid md:grid-cols-3 gap-6">
+    <div className="grid md:grid-cols-3 gap-5">
+      {stats.map((stat) => {
+        const Icon = stat.icon;
 
-      <div className="bg-white p-6 rounded-3xl border shadow-sm">
-        <p className="text-slate-500">Total Classes</p>
-        <h2 className="text-2xl font-bold mt-2">
-          {totalClasses}
-        </h2>
-      </div>
+        return (
+          <div
+            key={stat.title}
+            className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-md transition-shadow"
+          >
+            <div className="flex items-start justify-between">
+              <div
+                className={`w-12 h-12 rounded-2xl ${stat.iconBg} flex items-center justify-center`}
+              >
+                <Icon
+                  size={23}
+                  className={stat.iconColor}
+                />
+              </div>
 
-      <div className="bg-white p-6 rounded-3xl border shadow-sm">
-        <p className="text-slate-500">Attended</p>
-        <h2 className="text-2xl font-bold mt-2">
-          {totalAttended}
-        </h2>
-      </div>
+              <span className="text-xs font-medium text-slate-400">
+                Kortex
+              </span>
+            </div>
 
-      <div className="bg-white p-6 rounded-3xl border shadow-sm">
-        <p className="text-slate-500">Overall Attendance</p>
-        <h2 className={`text-2xl font-bold mt-2 ${getStatusColor()}`}>
-          {overall}%
-        </h2>
-      </div>
+            <p className="mt-5 text-sm font-medium text-slate-500">
+              {stat.title}
+            </p>
 
+            <div className="flex items-end justify-between gap-3 mt-1">
+              <p
+                className={`text-3xl font-bold ${
+                  stat.valueColor || "text-slate-800"
+                }`}
+              >
+                {stat.value}
+              </p>
+            </div>
+
+            <p className="text-xs text-slate-400 mt-2">
+              {stat.subtitle}
+            </p>
+          </div>
+        );
+      })}
     </div>
   );
 }

@@ -22,3 +22,10 @@ build/
 
 # Coverage
 coverage/
+
+# Uploaded/generated files
+server/uploads/
+
+# Backup/test files
+server/src/controllers/*_backup.js
+test-note.txt

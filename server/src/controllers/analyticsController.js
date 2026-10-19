@@ -17,7 +17,10 @@ exports.getAnalytics = async (req, res) => {
         Attendance.find({ userId }),
       ]);
 
-    // Overall attendance: total attended classes / total classes.
+    // --------------------------------------------------
+    // Overall attendance
+    // --------------------------------------------------
+
     const validAttendance = attendance.filter(
       (item) => Number(item.total) > 0
     );
@@ -37,7 +40,10 @@ exports.getAnalytics = async (req, res) => {
         ? Math.round((totalAttended / totalClasses) * 100)
         : 0;
 
-    // Overall planner progress.
+    // --------------------------------------------------
+    // Overall planner progress
+    // --------------------------------------------------
+
     const completedSessions = planner.filter(
       (item) =>
         item.status &&
@@ -46,16 +52,22 @@ exports.getAnalytics = async (req, res) => {
 
     const averageProgress =
       planner.length > 0
-        ? Math.round((completedSessions / planner.length) * 100)
+        ? Math.round(
+            (completedSessions / planner.length) * 100
+          )
         : 0;
 
-    // Per-subject progress and attendance.
+    // --------------------------------------------------
+    // Per-subject progress and attendance
+    // --------------------------------------------------
+
     const subjectProgress = subjects.map((subject) => {
       const subjectId = subject._id.toString();
 
       const subjectPlanner = planner.filter(
         (item) =>
           item.subjectId &&
+          item.subjectId._id &&
           item.subjectId._id.toString() === subjectId
       );
 
@@ -72,23 +84,31 @@ exports.getAnalytics = async (req, res) => {
             )
           : 0;
 
+      // Ignore attendance records that do not have
+      // a valid subject reference.
       const subjectAttendance = attendance.filter(
-        (item) => item.subjectId.toString() === subjectId
+        (item) =>
+          item.subjectId &&
+          item.subjectId.toString() === subjectId
       );
 
       const subjectAttended = subjectAttendance.reduce(
-        (sum, item) => sum + Number(item.attended || 0),
+        (sum, item) =>
+          sum + Number(item.attended || 0),
         0
       );
 
       const subjectTotal = subjectAttendance.reduce(
-        (sum, item) => sum + Number(item.total || 0),
+        (sum, item) =>
+          sum + Number(item.total || 0),
         0
       );
 
       const attendancePercentage =
         subjectTotal > 0
-          ? Math.round((subjectAttended / subjectTotal) * 100)
+          ? Math.round(
+              (subjectAttended / subjectTotal) * 100
+            )
           : null;
 
       // Higher score means the subject may need more attention.
@@ -108,18 +128,23 @@ exports.getAnalytics = async (req, res) => {
       };
     });
 
-    // Recent activity.
+    // --------------------------------------------------
+    // Recent activity
+    // --------------------------------------------------
+
     const recentActivity = [
       ...planner.map((item) => ({
         title: item.topic,
         type: "Planner",
         createdAt: item.createdAt,
       })),
+
       ...notes.map((item) => ({
         title: item.title,
         type: "Note",
         createdAt: item.createdAt,
       })),
+
       ...events.map((item) => ({
         title: item.title,
         type: "Event",
@@ -128,23 +153,38 @@ exports.getAnalytics = async (req, res) => {
     ]
       .sort(
         (a, b) =>
-          new Date(b.createdAt) - new Date(a.createdAt)
+          new Date(b.createdAt) -
+          new Date(a.createdAt)
       )
       .slice(0, 5);
+
+    // --------------------------------------------------
+    // Response
+    // --------------------------------------------------
 
     res.json({
       totalSubjects: subjects.length,
       totalPlanner: planner.length,
       totalNotes: notes.length,
       totalEvents: events.length,
+
       averageAttendance,
       averageProgress,
+
       subjectProgress,
+
       attendanceChart: attendance,
+
       recentActivity,
+
       recentPlanner: planner,
     });
   } catch (err) {
+    console.error(
+      "Analytics error:",
+      err
+    );
+
     res.status(500).json({
       message: err.message,
     });

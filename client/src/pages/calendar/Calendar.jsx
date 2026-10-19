@@ -60,7 +60,8 @@ function Calendar() {
       event.title.toLowerCase().includes(search.toLowerCase());
 
     const matchesFilter =
-      filter === "All" || event.type === filter;
+  filter === "All" ||
+  event.type?.toLowerCase() === filter.toLowerCase();
 
     return matchesSearch && matchesFilter;
 

@@ -53,9 +53,11 @@ function AICoach() {
 
   const [loading, setLoading] = useState(false);
 
-  const [plan, setPlan] = useState(null);
+ const [plan, setPlan] = useState(null);
 
-  const [message, setMessage] = useState("");
+const [showStudyPlan, setShowStudyPlan] = useState(false);
+
+const [message, setMessage] = useState("");
 
   const [isTyping, setIsTyping] = useState(false);
 
@@ -906,7 +908,6 @@ if (generatedPlan) {
 
         </div>
 
-
         {/* =================================================
             AI STUDY PLAN
         ================================================= */}
@@ -920,23 +921,119 @@ if (generatedPlan) {
               rounded-3xl
               shadow-xl
               border
+ai-chat-soft-border
               p-8
             ">
+              
+<button
+  type="button"
+  onClick={() => setShowStudyPlan((prev) => !prev)}
+  className="
+    w-full
+    flex
+    items-center
+    justify-between
+    gap-4
+    text-left
+    rounded-2xl
+    bg-gradient-to-r
+    from-indigo-50
+    via-violet-50
+    to-fuchsia-50
+    border
+    ai-chat-soft-border
+    p-5
+    hover:shadow-sm
+    transition
+  "
+>
+  <div className="flex items-center gap-4">
+    <div className="
+      w-12
+      h-12
+      rounded-2xl
+      bg-gradient-to-br
+      from-indigo-600
+      to-violet-600
+      text-white
+      flex
+      items-center
+      justify-center
+      shadow-md
+      flex-shrink-0
+    ">
+      <Calendar size={24} />
+    </div>
 
-              <h2 className="
-                text-3xl
-                font-bold
-              ">
+    <div>
+      <div className="flex items-center gap-3 flex-wrap">
+        <h2 className="
+          text-xl
+          md:text-2xl
+          font-bold
+          text-slate-800
+        ">
+          🤖 AI Generated Study Plan
+        </h2>
 
-                🤖 AI Generated Study Plan
+        <span className="
+          rounded-full
+          bg-indigo-100
+          px-3
+          py-1
+          text-xs
+          font-bold
+          text-indigo-700
+        ">
+          7 DAYS
+        </span>
+      </div>
 
-              </h2>
+      <p className="
+        text-sm
+        text-slate-500
+        mt-1
+      ">
+        Your personalized AI-powered study schedule
+      </p>
+    </div>
+  </div>
+
+  <div className="
+    flex
+    items-center
+    gap-2
+    rounded-xl
+    bg-white
+    border
+    ai-chat-soft-border
+    px-4
+    py-2.5
+    text-sm
+    font-semibold
+    text-indigo-700
+    shadow-sm
+    flex-shrink-0
+  ">
+    {showStudyPlan ? "Hide Plan" : "View 7-Day Plan"}
+
+    <ChevronRight
+      size={18}
+      className={`
+        transition-transform
+        duration-300
+        ${showStudyPlan ? "rotate-90" : ""}
+      `}
+    />
+  </div>
+</button>
 
 
-              <div className="
-                mt-6
-                space-y-5
-              ">
+{showStudyPlan && (
+  <div className="
+    mt-6
+    space-y-5
+  ">
 
                 {
 
@@ -955,6 +1052,7 @@ if (generatedPlan) {
                           rounded-2xl
                           p-5
                           border
+                            ai-chat-soft-border
                         "
                       >
 
@@ -1077,9 +1175,9 @@ if (generatedPlan) {
                   )
 
                 }
-
               </div>
-
+            )}
+            
             </div>
 
           )
@@ -1087,7 +1185,8 @@ if (generatedPlan) {
         }
 
 
-        {/* =================================================
+     
+   {/* =================================================
             KORTEX AI CHAT
         ================================================= */}
 
@@ -1096,6 +1195,7 @@ if (generatedPlan) {
           rounded-3xl
           shadow-xl
           border
+ai-chat-soft-border
           overflow-hidden
         ">
 
@@ -1107,6 +1207,7 @@ if (generatedPlan) {
           <div className="
             p-6
             border-b
+ai-chat-soft-border
             flex
             items-center
             justify-between
@@ -1184,6 +1285,7 @@ if (generatedPlan) {
 
             <div className="
               border-r
+                ai-chat-soft-border
               bg-slate-50
               p-4
             ">
@@ -1650,6 +1752,7 @@ function FeatureCard({
         p-6
         shadow-xl
         border
+ai-chat-soft-border
       "
 
     >

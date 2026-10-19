@@ -80,19 +80,25 @@ export function SubjectProvider({ children }) {
   };
 
   // Delete Subject
-  const deleteSubject = async (id) => {
-    try {
+const deleteSubject = async (id) => {
+  try {
+    await api.delete(`/subjects/${id}`);
 
-      await api.delete(`/subjects/${id}`);
+    await fetchSubjects();
 
-      await fetchSubjects();
-
-    } catch (error) {
-
-      console.log("Delete failed", error);
-
-    }
-  };
+    // Tell other parts of the app that a subject
+    // and its related planner sessions were deleted.
+    window.dispatchEvent(
+      new CustomEvent("subjectDeleted", {
+        detail: {
+          subjectId: id,
+        },
+      })
+    );
+  } catch (error) {
+    console.log("Delete failed", error);
+  }
+};
 
   return (
     <SubjectContext.Provider

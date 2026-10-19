@@ -1,7 +1,7 @@
 function Logo({ size = "text-4xl", dark = false }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20 backdrop-blur-md shadow-lg">
+      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-100 via-violet-100 to-purple-100 shadow-md">
         <span className="text-2xl">🎓</span>
       </div>
 

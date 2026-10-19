@@ -1,8 +1,18 @@
 import { useEffect, useState } from "react";
+
+import {
+  Sparkles,
+  Trophy,
+  CalendarCheck,
+  AlertTriangle,
+  TrendingUp,
+} from "lucide-react";
+
 import { getAnalytics } from "../../services/analyticsService";
 
 function InsightsCard() {
-  const [analytics, setAnalytics] = useState(null);
+  const [analytics, setAnalytics] =
+    useState(null);
 
   useEffect(() => {
     const loadAnalytics = async () => {
@@ -22,23 +32,19 @@ function InsightsCard() {
 
   if (!analytics) {
     return (
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-8 animate-pulse h-72" />
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
+        <div className="h-72 rounded-2xl bg-slate-50 animate-pulse" />
+      </div>
     );
   }
 
-  // --------------------------------
-  // Best Performing Subject
-  // --------------------------------
-
-  const bestSubject = analytics.subjectProgress?.length
-    ? [...analytics.subjectProgress].sort(
-        (a, b) => b.progress - a.progress
-      )[0]
-    : null;
-
-  // --------------------------------
-  // Lowest Attendance Subject
-  // --------------------------------
+  const bestSubject =
+    analytics.subjectProgress?.length
+      ? [...analytics.subjectProgress].sort(
+          (a, b) =>
+            b.progress - a.progress
+        )[0]
+      : null;
 
   let lowestAttendance = null;
 
@@ -57,24 +63,19 @@ function InsightsCard() {
           ),
         }));
 
-    if (attendanceWithPercentage.length > 0) {
+    if (
+      attendanceWithPercentage.length > 0
+    ) {
       lowestAttendance =
         [...attendanceWithPercentage].sort(
-          (a, b) => a.percentage - b.percentage
+          (a, b) =>
+            a.percentage - b.percentage
         )[0];
     }
   }
 
-  // --------------------------------
-  // Overall Completion
-  // --------------------------------
-
   const overallProgress =
     analytics.averageProgress || 0;
-
-  // --------------------------------
-  // Insight message
-  // --------------------------------
 
   let productivityMessage =
     "Start completing planner sessions to build your study progress.";
@@ -91,107 +92,199 @@ function InsightsCard() {
   }
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-8">
+    <div className="relative overflow-hidden bg-white rounded-3xl border border-slate-200 shadow-sm">
+      {/* Top accent */}
+      <div className="h-1.5 bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500" />
 
-      <div>
-        <h2 className="text-2xl font-bold text-slate-800">
-          AI Insights
-        </h2>
+      <div className="p-6 md:p-8">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-50 to-violet-100 flex items-center justify-center">
+              <Sparkles
+                size={23}
+                className="text-indigo-600"
+              />
+            </div>
 
-        <p className="text-slate-500 mt-1">
-          Personalized insights based on your academic activity.
-        </p>
-      </div>
+            <div>
+              <h2 className="text-xl md:text-2xl font-bold text-slate-800">
+                AI Insights
+              </h2>
 
-      <div className="space-y-5 mt-6">
+              <p className="text-sm text-slate-500 mt-1">
+                Personalized observations from your academic activity.
+              </p>
+            </div>
+          </div>
 
-        {/* Best Subject */}
+          <span className="inline-flex self-start md:self-auto items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold">
+            <Sparkles size={13} />
+            Kortex AI
+          </span>
+        </div>
 
-        <div className="rounded-2xl bg-emerald-50 border border-emerald-100 p-5">
+        {/* Insights */}
+        <div className="grid lg:grid-cols-3 gap-4 mt-7">
 
-          <h3 className="font-semibold text-slate-800">
-            ⭐ Best Performing Subject
-          </h3>
+          {/* Best Subject */}
+          <div className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-5">
+            <div className="flex items-center justify-between">
+              <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm">
+                <Trophy
+                  size={19}
+                  className="text-emerald-600"
+                />
+              </div>
 
-          <p className="mt-2 text-slate-600">
+              <span className="text-xs font-semibold text-emerald-600">
+                Performance
+              </span>
+            </div>
+
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mt-5">
+              Best Subject
+            </p>
 
             {bestSubject ? (
               <>
-                <strong>{bestSubject.subject}</strong> currently has
-                <strong> {bestSubject.progress}%</strong> planner
-                completion.
+                <h3 className="text-lg font-bold text-slate-800 mt-1">
+                  {bestSubject.subject}
+                </h3>
+
+                <p className="text-sm text-slate-500 mt-2">
+                  Planner completion
+                </p>
+
+                <p className="text-2xl font-bold text-emerald-600 mt-1">
+                  {bestSubject.progress}%
+                </p>
               </>
             ) : (
-              "No subject progress data available yet."
+              <p className="text-sm text-slate-500 mt-3">
+                No subject progress data available yet.
+              </p>
             )}
+          </div>
 
-          </p>
+          {/* Productivity */}
+          <div className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 to-white p-5">
+            <div className="flex items-center justify-between">
+              <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm">
+                <CalendarCheck
+                  size={19}
+                  className="text-indigo-600"
+                />
+              </div>
 
-        </div>
+              <span className="text-xs font-semibold text-indigo-600">
+                Productivity
+              </span>
+            </div>
 
-        {/* Productivity */}
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mt-5">
+              Planner Completion
+            </p>
 
-        <div className="rounded-2xl bg-indigo-50 border border-indigo-100 p-5">
+            <p className="text-2xl font-bold text-indigo-600 mt-1">
+              {overallProgress}%
+            </p>
 
-          <h3 className="font-semibold text-slate-800">
-            📅 Productivity
-          </h3>
+            <p className="text-sm text-slate-500 mt-2">
+              {analytics.totalPlanner} tasks ·{" "}
+              {analytics.totalNotes} notes ·{" "}
+              {analytics.totalEvents} events
+            </p>
 
-          <p className="mt-2 text-slate-600">
-            You currently have
+            <p className="text-xs text-indigo-700 font-medium mt-3 leading-relaxed">
+              {productivityMessage}
+            </p>
+          </div>
 
-            <strong> {analytics.totalPlanner} </strong>
-            planner tasks,
+          {/* Attendance */}
+          <div className="rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50 to-white p-5">
+            <div className="flex items-center justify-between">
+              <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm">
+                <AlertTriangle
+                  size={19}
+                  className={
+                    lowestAttendance &&
+                    lowestAttendance.percentage < 75
+                      ? "text-red-500"
+                      : "text-orange-500"
+                  }
+                />
+              </div>
 
-            <strong> {analytics.totalNotes} </strong>
-            notes and
+              <span className="text-xs font-semibold text-orange-600">
+                Attendance
+              </span>
+            </div>
 
-            <strong> {analytics.totalEvents} </strong>
-            calendar events.
-          </p>
-
-          <p className="mt-2 text-slate-600">
-            Overall planner completion:
-            <strong> {overallProgress}%</strong>.
-          </p>
-
-          <p className="mt-2 text-indigo-700 font-medium">
-            {productivityMessage}
-          </p>
-
-        </div>
-
-        {/* Attendance */}
-
-        <div className="rounded-2xl bg-red-50 border border-red-100 p-5">
-
-          <h3 className="font-semibold text-slate-800">
-            ⚠ Attendance Alert
-          </h3>
-
-          <p className="mt-2 text-slate-600">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mt-5">
+              Area to Watch
+            </p>
 
             {lowestAttendance ? (
               <>
-                Your lowest attendance record is
-                <strong> {lowestAttendance.percentage}%</strong>.
-                Try to improve your attendance for this subject.
+                <h3 className="text-lg font-bold text-slate-800 mt-1">
+                  Needs Attention
+                </h3>
+
+                <p className="text-sm text-slate-500 mt-2">
+                  Lowest attendance
+                </p>
+
+                <p
+                  className={`text-2xl font-bold mt-1 ${
+                    lowestAttendance.percentage < 75
+                      ? "text-red-600"
+                      : "text-orange-600"
+                  }`}
+                >
+                  {lowestAttendance.percentage}%
+                </p>
               </>
             ) : (
-              "No attendance records found."
+              <>
+                <h3 className="text-lg font-bold text-slate-800 mt-1">
+                  No Alert
+                </h3>
+
+                <p className="text-sm text-slate-500 mt-2">
+                  No attendance records found.
+                </p>
+              </>
             )}
-
-          </p>
-
-          <p className="mt-2 text-slate-500 text-sm">
-            Overall attendance:
-            <strong> {analytics.averageAttendance}%</strong>
-          </p>
-
+          </div>
         </div>
 
-      </div>
+        {/* Bottom summary */}
+        <div className="mt-5 rounded-2xl bg-slate-50 border border-slate-100 p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center">
+              <TrendingUp
+                size={18}
+                className="text-indigo-600"
+              />
+            </div>
 
+            <div>
+              <p className="text-sm font-semibold text-slate-700">
+                Overall academic snapshot
+              </p>
+
+              <p className="text-xs text-slate-400 mt-0.5">
+                Keep your study sessions and attendance consistent.
+              </p>
+            </div>
+          </div>
+
+          <div className="text-sm font-bold text-slate-700">
+            {analytics.averageAttendance}% attendance
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

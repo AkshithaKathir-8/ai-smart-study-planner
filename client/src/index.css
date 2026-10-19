@@ -24,3 +24,6 @@
 .ai-markdown strong {
   font-weight: 700;
 }
+.ai-chat-soft-border {
+  border-color: rgba(203, 213, 225, 0.9) !important;
+}

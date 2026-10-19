@@ -1,77 +1,107 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const subjectRoutes = require("./routes/subjectRoutes");
 const plannerRoutes = require("./routes/plannerRoutes");
-const aiRoutes=require("./routes/aiRoutes");
+const aiRoutes = require("./routes/aiRoutes");
 const calendarRoutes = require("./routes/calendarRoutes");
-const noteRoutes=require("./routes/noteRoutes");
-const attendanceRoutes=require("./routes/attendanceRoutes");
+const noteRoutes = require("./routes/noteRoutes");
+const attendanceRoutes = require("./routes/attendanceRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
 const quizRoutes = require("./routes/quizRoutes");
 
 const app = express();
 
-
+// ------------------------------------
 // Middlewares
+// ------------------------------------
 
 app.use(cors());
 
 app.use(express.json());
 
-app.use(express.urlencoded({
-    extended:true
-}));
+app.use(
+  express.urlencoded({
+    extended: true,
+  })
+);
 
+// ------------------------------------
+// Uploaded files
+// ------------------------------------
+
+app.use(
+  "/uploads",
+  express.static(
+    path.join(__dirname, "../uploads")
+  )
+);
+
+// ------------------------------------
 // Routes
+// ------------------------------------
 
 app.use(
-    "/api/auth",
-    authRoutes
+  "/api/auth",
+  authRoutes
 );
 
 app.use(
-"/api/ai",
-aiRoutes
+  "/api/ai",
+  aiRoutes
 );
 
 app.use(
-    "/api/planner",
-    plannerRoutes
+  "/api/planner",
+  plannerRoutes
 );
 
 app.use(
-    "/api/user",
-    userRoutes
+  "/api/user",
+  userRoutes
 );
 
 app.use(
-    "/api/subjects",
-    subjectRoutes
+  "/api/subjects",
+  subjectRoutes
 );
 
-app.use("/api/notes",noteRoutes);
+app.use(
+  "/api/notes",
+  noteRoutes
+);
 
-app.use("/api/calendar", calendarRoutes);
+app.use(
+  "/api/calendar",
+  calendarRoutes
+);
+
+app.use(
+  "/api/attendance",
+  attendanceRoutes
+);
+
+app.use(
+  "/api/analytics",
+  analyticsRoutes
+);
+
+app.use(
+  "/api/quiz",
+  quizRoutes
+);
+
+// ------------------------------------
 // Default route
-
-app.use(
-"/api/attendance",
-attendanceRoutes
-);
-
-app.use("/api/analytics", analyticsRoutes);
-app.use("/api/quiz", quizRoutes);
+// ------------------------------------
 
 app.get("/", (req, res) => {
-
-    res.send(
-        "Kortex AI Backend Running 🚀"
-    );
-
+  res.send(
+    "Kortex AI Backend Running 🚀"
+  );
 });
-
 
 module.exports = app;

@@ -21,10 +21,20 @@ function UpcomingTasks() {
     type: "Calendar Event",
   }));
 
-  const tasks = [...plannerTasks, ...calendarTasks]
-    .filter((item) => item.date)
-    .sort((a, b) => new Date(a.date) - new Date(b.date))
-    .slice(0, 5);
+  const today = new Date();
+today.setHours(0, 0, 0, 0);
+
+const tasks = [...plannerTasks, ...calendarTasks]
+  .filter((item) => {
+    if (!item.date) return false;
+
+    const taskDate = new Date(item.date);
+    taskDate.setHours(0, 0, 0, 0);
+
+    return taskDate >= today;
+  })
+  .sort((a, b) => new Date(a.date) - new Date(b.date))
+  .slice(0, 5);
 
   return (
     <motion.div

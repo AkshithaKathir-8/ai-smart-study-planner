@@ -18,8 +18,45 @@ type:String
 },
 
 date:{
+
 type:Date,
+
 required:true
+
+},
+
+time: {
+  type: String,
+  default: ""
+},
+
+type: {
+  type: String,
+  enum: ["study", "assignment", "exam", "personal"],
+  default: "study"
+},
+
+time:{
+
+type:String,
+
+default:""
+
+},
+
+type:{
+
+type:String,
+
+enum:[
+  "study",
+  "assignment",
+  "exam",
+  "personal"
+],
+
+default:"study"
+
 },
 
 color:{
