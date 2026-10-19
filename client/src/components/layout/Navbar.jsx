@@ -1083,7 +1083,7 @@ function Navbar() {
             >
               {user?.profileImage ? (
                 <img
-                  src={`http://localhost:5000${user.profileImage}`}
+                  src={`https://ai-smart-study-planner-dhc6.onrender.com${user.profileImage}`}
                   alt="Profile"
                   className="w-full h-full object-cover"
                 />

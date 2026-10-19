@@ -86,7 +86,7 @@ function Settings() {
       return "";
     }
 
-    return `http://localhost:5000${user.profileImage}`;
+    return `https://ai-smart-study-planner-dhc6.onrender.com${user.profileImage}`;
   };
 
   const getUserInitial = () => {

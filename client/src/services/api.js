@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: "https://ai-smart-study-planner-dhc6.onrender.com/api",
 });
 
 // Add JWT token automatically

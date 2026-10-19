@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: "https://ai-smart-study-planner-dhc6.onrender.com/api",
 });
 
 export const loginUser = async (userData) => {
